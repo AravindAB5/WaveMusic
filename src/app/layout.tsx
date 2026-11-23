@@ -1,5 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
+import { SiteHeader } from '@/components/layout/SiteHeader';
+import { colorSchemeInitScript } from '@/styles/colorScheme';
+import { palettes } from '@/styles/palettes';
+import { Providers } from './providers';
 
 export const metadata: Metadata = {
   title: 'WaveMusic — Top Albums',
@@ -9,12 +13,26 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: palettes.light.surface },
+    { media: '(prefers-color-scheme: dark)', color: palettes.dark.surface },
+  ],
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    // The init script sets data-theme before hydration; suppress the expected
+    // attribute mismatch on <html> only.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: colorSchemeInitScript }} />
+      </head>
+      <body>
+        <Providers>
+          <SiteHeader />
+          {children}
+        </Providers>
+      </body>
     </html>
   );
 }

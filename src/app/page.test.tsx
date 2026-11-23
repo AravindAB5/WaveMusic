@@ -1,9 +1,10 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { renderWithProviders } from '@/test/render';
 import HomePage from './page';
 
 describe('HomePage', () => {
-  it('renders the app heading', () => {
-    render(<HomePage />);
-    expect(screen.getByRole('heading', { level: 1, name: 'WaveMusic' })).toBeInTheDocument();
+  it('renders the page heading', () => {
+    renderWithProviders(<HomePage />);
+    expect(screen.getByRole('heading', { level: 1, name: 'Top Albums' })).toBeInTheDocument();
   });
 });

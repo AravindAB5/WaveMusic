@@ -1,8 +1,10 @@
+import { PageContainer } from '@/components/layout/PageContainer';
+
 export default function HomePage() {
   return (
-    <main>
-      <h1>WaveMusic</h1>
-      <p>Top albums from iTunes.</p>
-    </main>
+    <PageContainer>
+      <h1>Top Albums</h1>
+      <p>The current top albums on iTunes.</p>
+    </PageContainer>
   );
 }
