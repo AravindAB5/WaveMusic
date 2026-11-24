@@ -23,9 +23,16 @@ export interface FiltersState {
   /** Genre label from the feed, e.g. "Pop"; null means all genres. */
   genre: string | null;
   sort: SortKey;
+  /** Show only favorited albums. */
+  favoritesOnly: boolean;
 }
 
-export const initialFiltersState: FiltersState = { query: '', genre: null, sort: 'rank' };
+export const initialFiltersState: FiltersState = {
+  query: '',
+  genre: null,
+  sort: 'rank',
+  favoritesOnly: false,
+};
 
 export const filtersSlice = createSlice({
   name: 'filters',
@@ -40,6 +47,9 @@ export const filtersSlice = createSlice({
     sortChanged(state, action: PayloadAction<SortKey>) {
       state.sort = action.payload;
     },
+    favoritesOnlyToggled(state) {
+      state.favoritesOnly = !state.favoritesOnly;
+    },
     filtersReset() {
       return initialFiltersState;
     },
@@ -48,14 +58,19 @@ export const filtersSlice = createSlice({
       state.query = action.payload.query.slice(0, MAX_QUERY_LENGTH);
       state.genre = action.payload.genre || null;
       state.sort = action.payload.sort;
+      state.favoritesOnly = action.payload.favoritesOnly;
     },
   },
   selectors: {
     selectFilters: (state) => state,
     selectHasActiveFilters: (state) =>
-      state.query.trim() !== '' || state.genre !== null || state.sort !== initialFiltersState.sort,
+      state.query.trim() !== '' ||
+      state.genre !== null ||
+      state.sort !== initialFiltersState.sort ||
+      state.favoritesOnly,
   },
 });
 
-export const { queryChanged, genreChanged, sortChanged, filtersReset, filtersHydrated } = filtersSlice.actions;
+export const { queryChanged, genreChanged, sortChanged, favoritesOnlyToggled, filtersReset, filtersHydrated } =
+  filtersSlice.actions;
 export const { selectFilters, selectHasActiveFilters } = filtersSlice.selectors;

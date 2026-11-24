@@ -24,9 +24,21 @@ const PRIORITY_COUNT = 6;
 
 interface AlbumGridProps {
   albums: readonly Album[];
+  /** Accessible name of the list. */
+  label?: string;
+  showRank?: boolean;
+  headingLevel?: 2 | 3;
+  /** Eager-load the first row or two; off for grids further down the page. */
+  prioritizeFirst?: boolean;
 }
 
-export function AlbumGrid({ albums }: AlbumGridProps) {
+export function AlbumGrid({
+  albums,
+  label = 'Top albums',
+  showRank = true,
+  headingLevel = 2,
+  prioritizeFirst = true,
+}: AlbumGridProps) {
   if (albums.length === 0) {
     return (
       <StatusPanel title="No albums right now">
@@ -37,10 +49,15 @@ export function AlbumGrid({ albums }: AlbumGridProps) {
 
   return (
     // Explicit role: Safari drops list semantics when list-style is none.
-    <Grid role="list" aria-label="Top albums">
+    <Grid role="list" aria-label={label}>
       {albums.map((album, index) => (
         <li key={album.id}>
-          <AlbumCard album={album} priority={index < PRIORITY_COUNT} />
+          <AlbumCard
+            album={album}
+            priority={prioritizeFirst && index < PRIORITY_COUNT}
+            showRank={showRank}
+            headingLevel={headingLevel}
+          />
         </li>
       ))}
     </Grid>

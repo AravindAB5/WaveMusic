@@ -9,12 +9,23 @@ describe('parseFilters', () => {
     expect(parse('')).toEqual(initialFiltersState);
   });
 
-  it('reads q, genre and sort', () => {
-    expect(parse('q=taylor+swift&genre=Pop&sort=newest')).toEqual({
+  it('reads q, genre, sort and favorites', () => {
+    expect(parse('q=taylor+swift&genre=Pop&sort=newest&favorites=1')).toEqual({
       query: 'taylor swift',
       genre: 'Pop',
       sort: 'newest',
+      favoritesOnly: true,
     });
+  });
+
+  it.each([
+    ['favorites=1', true],
+    ['favorites=true', true],
+    ['favorites=0', false],
+    ['favorites=yes', false],
+    ['favorites=', false],
+  ])('parses %s as favoritesOnly=%s', (qs, expected) => {
+    expect(parse(qs).favoritesOnly).toBe(expected);
   });
 
   it('decodes genres with reserved characters', () => {
@@ -50,14 +61,14 @@ describe('serializeFilters', () => {
   });
 
   it('encodes every non-default filter', () => {
-    const qs = serializeFilters({ query: 'a b', genre: 'R&B/Soul', sort: 'oldest' }).toString();
-    expect(qs).toBe('q=a+b&genre=R%26B%2FSoul&sort=oldest');
+    const qs = serializeFilters({ query: 'a b', genre: 'R&B/Soul', sort: 'oldest', favoritesOnly: true }).toString();
+    expect(qs).toBe('q=a+b&genre=R%26B%2FSoul&sort=oldest&favorites=1');
   });
 
   it.each<FiltersState>([
-    { query: 'beyoncé', genre: 'Country', sort: 'title' },
-    { query: '', genre: 'Hip-Hop/Rap', sort: 'rank' },
-    { query: 'x y z', genre: null, sort: 'newest' },
+    { query: 'beyoncé', genre: 'Country', sort: 'title', favoritesOnly: false },
+    { query: '', genre: 'Hip-Hop/Rap', sort: 'rank', favoritesOnly: true },
+    { query: 'x y z', genre: null, sort: 'newest', favoritesOnly: false },
   ])('round-trips %j', (filters) => {
     expect(parseFilters(serializeFilters(filters))).toEqual(filters);
   });

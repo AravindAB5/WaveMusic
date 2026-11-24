@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import styled from 'styled-components';
 import { VisuallyHidden } from '@/components/ui/VisuallyHidden';
+import { FavoriteButton } from '@/features/favorites/FavoriteButton';
 import type { Album } from '@/types/album';
 
 export const CardShell = styled.article`
@@ -24,8 +25,10 @@ export const CardShell = styled.article`
     box-shadow: ${({ theme }) => theme.shadows.md};
   }
 
-  /* The title link is stretched over the card, so show its focus ring here. */
-  &:focus-within {
+  /* The title link is stretched over the card, so show its focus ring here.
+     :has(:focus-visible) rather than :focus-within, so a mouse click on the
+     favorite button doesn't ring the whole card. */
+  &:has(:focus-visible) {
     outline: 2px solid ${({ theme }) => theme.colors.focus};
     outline-offset: 2px;
   }
@@ -96,6 +99,14 @@ const Artist = styled.p`
   text-overflow: ellipsis;
 `;
 
+/** Sits above the stretched link so it stays independently clickable. */
+const FavoriteSlot = styled.div`
+  position: absolute;
+  top: ${({ theme }) => theme.space(2)};
+  right: ${({ theme }) => theme.space(2)};
+  z-index: 1;
+`;
+
 const Meta = styled.p`
   font-size: ${({ theme }) => theme.fontSizes.xs};
   color: ${({ theme }) => theme.colors.textMuted};
@@ -108,9 +119,13 @@ interface AlbumCardProps {
   album: Album;
   /** Eager-load above-the-fold artwork for a faster LCP. */
   priority?: boolean;
+  /** Hidden for favorites that have left the chart: their rank is stale. */
+  showRank?: boolean;
+  /** Card titles are h2 in the main grid, h3 inside a titled section. */
+  headingLevel?: 2 | 3;
 }
 
-export function AlbumCard({ album, priority = false }: AlbumCardProps) {
+export function AlbumCard({ album, priority = false, showRank = true, headingLevel = 2 }: AlbumCardProps) {
   const meta = [album.genre, album.releaseYear].filter(Boolean).join(' · ');
 
   return (
@@ -118,18 +133,24 @@ export function AlbumCard({ album, priority = false }: AlbumCardProps) {
       <Artwork>
         {/* Decorative: the title right below names the album. */}
         <Image src={album.artworkUrlHiRes} alt="" fill sizes={ARTWORK_SIZES} priority={priority} />
-        <Rank>
-          <VisuallyHidden>Rank </VisuallyHidden>
-          {album.rank}
-        </Rank>
+        {showRank && (
+          <Rank>
+            <VisuallyHidden>Rank </VisuallyHidden>
+            {album.rank}
+          </Rank>
+        )}
       </Artwork>
       <Body>
-        <Title>
+        <Title as={`h${headingLevel}`}>
           <Link href={`/album/${album.id}`}>{album.title}</Link>
         </Title>
         <Artist>{album.artist}</Artist>
         {meta && <Meta>{meta}</Meta>}
       </Body>
+      {/* After the title in the DOM, so Tab reaches the link first. */}
+      <FavoriteSlot>
+        <FavoriteButton album={album} />
+      </FavoriteSlot>
     </CardShell>
   );
 }

@@ -1,7 +1,7 @@
 import { initialFiltersState, isSortKey, MAX_QUERY_LENGTH, type FiltersState } from './filtersSlice';
 
-/** Query-string keys. Short and human-readable: `/?q=swift&genre=Pop&sort=newest`. */
-export const FILTER_PARAMS = { query: 'q', genre: 'genre', sort: 'sort' } as const;
+/** Query-string keys. Short and human-readable: `/?q=swift&genre=Pop&sort=newest&favorites=1`. */
+export const FILTER_PARAMS = { query: 'q', genre: 'genre', sort: 'sort', favoritesOnly: 'favorites' } as const;
 
 /** Minimal read interface shared by URLSearchParams and Next's ReadonlyURLSearchParams. */
 interface SearchParamsLike {
@@ -22,6 +22,8 @@ export function parseFilters(params: SearchParamsLike): FiltersState {
     query,
     genre,
     sort: isSortKey(sort) ? sort : initialFiltersState.sort,
+    // Accept the common truthy spellings; anything else means off.
+    favoritesOnly: ['1', 'true'].includes(params.get(FILTER_PARAMS.favoritesOnly) ?? ''),
   };
 }
 
@@ -35,5 +37,6 @@ export function serializeFilters(filters: FiltersState): URLSearchParams {
   if (query) params.set(FILTER_PARAMS.query, query);
   if (filters.genre) params.set(FILTER_PARAMS.genre, filters.genre);
   if (filters.sort !== initialFiltersState.sort) params.set(FILTER_PARAMS.sort, filters.sort);
+  if (filters.favoritesOnly) params.set(FILTER_PARAMS.favoritesOnly, '1');
   return params;
 }

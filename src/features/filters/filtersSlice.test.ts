@@ -1,6 +1,7 @@
 /** @jest-environment node */
 import { makeStore } from '@/store/store';
 import {
+  favoritesOnlyToggled,
   filtersHydrated,
   filtersReset,
   genreChanged,
@@ -15,7 +16,7 @@ import {
 
 describe('filtersSlice', () => {
   it('starts with no filters, sorted by chart position', () => {
-    expect(selectFilters(makeStore().getState())).toEqual({ query: '', genre: null, sort: 'rank' });
+    expect(selectFilters(makeStore().getState())).toEqual({ query: '', genre: null, sort: 'rank', favoritesOnly: false });
   });
 
   it('updates each filter independently', () => {
@@ -23,7 +24,15 @@ describe('filtersSlice', () => {
     store.dispatch(queryChanged('swift'));
     store.dispatch(genreChanged('Pop'));
     store.dispatch(sortChanged('newest'));
-    expect(selectFilters(store.getState())).toEqual({ query: 'swift', genre: 'Pop', sort: 'newest' });
+    store.dispatch(favoritesOnlyToggled());
+    expect(selectFilters(store.getState())).toEqual({
+      query: 'swift',
+      genre: 'Pop',
+      sort: 'newest',
+      favoritesOnly: true,
+    });
+    store.dispatch(favoritesOnlyToggled());
+    expect(selectFilters(store.getState()).favoritesOnly).toBe(false);
   });
 
   it('keeps the query as typed but caps its length', () => {
@@ -41,16 +50,16 @@ describe('filtersSlice', () => {
   });
 
   it('resets everything', () => {
-    const store = makeStore({ filters: { query: 'a', genre: 'Pop', sort: 'title' } });
+    const store = makeStore({ filters: { query: 'a', genre: 'Pop', sort: 'title', favoritesOnly: true } });
     store.dispatch(filtersReset());
     expect(selectFilters(store.getState())).toEqual(initialFiltersState);
   });
 
   it('hydrates all filters at once and keeps state identity when nothing changed', () => {
     const store = makeStore();
-    store.dispatch(filtersHydrated({ query: 'q', genre: 'Rock', sort: 'oldest' }));
+    store.dispatch(filtersHydrated({ query: 'q', genre: 'Rock', sort: 'oldest', favoritesOnly: true }));
     const before = store.getState().filters;
-    store.dispatch(filtersHydrated({ query: 'q', genre: 'Rock', sort: 'oldest' }));
+    store.dispatch(filtersHydrated({ query: 'q', genre: 'Rock', sort: 'oldest', favoritesOnly: true }));
     expect(store.getState().filters).toBe(before);
   });
 
@@ -60,8 +69,9 @@ describe('filtersSlice', () => {
     [{ query: 'a', genre: null, sort: 'rank' }, true],
     [{ query: '', genre: 'Pop', sort: 'rank' }, true],
     [{ query: '', genre: null, sort: 'title' }, true],
+    [{ query: '', genre: null, sort: 'rank', favoritesOnly: true }, true],
   ] as const)('selectHasActiveFilters(%j) → %s', (filters, expected) => {
-    expect(selectHasActiveFilters(makeStore({ filters: { ...filters } }).getState())).toBe(expected);
+    expect(selectHasActiveFilters(makeStore({ filters: { ...initialFiltersState, ...filters } }).getState())).toBe(expected);
   });
 
   it('validates sort keys', () => {

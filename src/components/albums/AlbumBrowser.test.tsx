@@ -45,7 +45,7 @@ describe('AlbumBrowser', () => {
     setUrl('/?genre=Country&sort=oldest');
     const { store } = setup();
 
-    expect(selectFilters(store.getState())).toEqual({ query: '', genre: 'Country', sort: 'oldest' });
+    expect(selectFilters(store.getState())).toEqual({ query: '', genre: 'Country', sort: 'oldest', favoritesOnly: false });
     expect(screen.getByLabelText('Genre')).toHaveValue('Country');
     expect(screen.getByLabelText('Sort by')).toHaveValue('oldest');
     expect(visibleTitles()).toEqual(['Cowboy Carter', 'Grateful']);

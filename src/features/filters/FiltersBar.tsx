@@ -2,9 +2,11 @@
 
 import { useId } from 'react';
 import styled, { css } from 'styled-components';
+import { useFavorites } from '@/features/favorites/useFavorites';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import type { GenreOption } from './filterAlbums';
 import {
+  favoritesOnlyToggled,
   filtersReset,
   genreChanged,
   isSortKey,
@@ -24,7 +26,7 @@ const Form = styled.form`
   margin-bottom: ${({ theme }) => theme.space(3)};
 
   ${({ theme }) => theme.media.md} {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto auto;
   }
 `;
 
@@ -70,8 +72,7 @@ const Select = styled.select`
   background: ${({ theme }) => theme.colors.surface};
 `;
 
-const ClearButton = styled.button`
-  grid-column: 1 / -1;
+const PillButton = styled.button`
   min-height: 44px;
   padding: ${({ theme }) => `0 ${theme.space(4)}`};
   border: 1px solid ${({ theme }) => theme.colors.border};
@@ -89,8 +90,10 @@ const ClearButton = styled.button`
     opacity: 0.5;
   }
 
-  ${({ theme }) => theme.media.md} {
-    grid-column: auto;
+  &[aria-pressed='true'] {
+    border-color: ${({ theme }) => theme.colors.accent};
+    background: ${({ theme }) => theme.colors.accent};
+    color: ${({ theme }) => theme.colors.accentContrast};
   }
 `;
 
@@ -103,6 +106,8 @@ export function FiltersBar({ genres, totalCount }: FiltersBarProps) {
   const dispatch = useAppDispatch();
   const filters = useAppSelector(selectFilters);
   const hasActiveFilters = useAppSelector(selectHasActiveFilters);
+  // The server can't know the count; show it only once it's safe to (see useFavorites).
+  const { ready: favoritesReady, ids: favoriteIds } = useFavorites();
   const id = useId();
 
   return (
@@ -154,9 +159,17 @@ export function FiltersBar({ genres, totalCount }: FiltersBarProps) {
         </Select>
       </Field>
 
-      <ClearButton type="button" onClick={() => dispatch(filtersReset())} disabled={!hasActiveFilters}>
+      <PillButton
+        type="button"
+        aria-pressed={filters.favoritesOnly}
+        onClick={() => dispatch(favoritesOnlyToggled())}
+      >
+        Favorites{favoritesReady ? ` (${favoriteIds.length})` : ''}
+      </PillButton>
+
+      <PillButton type="button" onClick={() => dispatch(filtersReset())} disabled={!hasActiveFilters}>
         Clear filters
-      </ClearButton>
+      </PillButton>
     </Form>
   );
 }
