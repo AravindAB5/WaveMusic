@@ -32,24 +32,3 @@ export const ChevronLeftIcon = () => (
     <path d="m15 18-6-6 6-6" />
   </svg>
 );
-
-/** WaveMusic mark: an original equalizer-wave glyph in a gradient tile. */
-export const LogoMark = () => (
-  <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-    <defs>
-      <linearGradient id="wm-logo" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stopColor="#9b87ff" />
-        <stop offset="1" stopColor="#5b3bd6" />
-      </linearGradient>
-    </defs>
-    <rect width="32" height="32" rx="9" fill="url(#wm-logo)" />
-    <path
-      d="M7 17.5c1.6 0 1.6-5 3.2-5s1.6 9 3.2 9 1.6-13 3.2-13 1.6 11 3.2 11 1.6-6 3.2-6 1.4 2.6 2 3"
-      fill="none"
-      stroke="#fff"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-);

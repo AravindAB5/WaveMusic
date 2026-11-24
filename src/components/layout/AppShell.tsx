@@ -1,12 +1,16 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Suspense, type ReactNode } from 'react';
 import styled from 'styled-components';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
 import { useFavorites } from '@/features/favorites/useFavorites';
-import { HeartIcon, HomeIcon, LogoMark } from './icons';
+import logoDark from '@/assets/brand/logo-dark.png';
+import logoLight from '@/assets/brand/logo-light.png';
+import waveMark from '@/assets/brand/wave-mark.png';
+import { HeartIcon, HomeIcon } from './icons';
 
 const SkipLink = styled.a`
   position: fixed;
@@ -63,17 +67,81 @@ const Chrome = styled.header`
 const Brand = styled(Link)`
   display: inline-flex;
   align-items: center;
-  gap: ${({ theme }) => theme.space(2)};
   min-height: 44px;
-  padding: ${({ theme }) => `0 ${theme.space(3)}`};
+  padding: ${({ theme }) => `0 ${theme.space(2)}`};
+  border-radius: ${({ theme }) => theme.radii.md};
+  text-decoration: none;
+
+  img {
+    display: block;
+    height: auto;
+  }
+`;
+
+/**
+ * Phones/tablets (64px top bar): the wave mark plus a typeset wordmark in the
+ * logo's colors; the stacked logo would be illegible at that height.
+ */
+const CompactLogo = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space(2)};
   font-size: ${({ theme }) => theme.fontSizes.lg};
   font-weight: ${({ theme }) => theme.fontWeights.bold};
   letter-spacing: -0.02em;
-  text-decoration: none;
 
-  svg {
-    width: 30px;
-    height: 30px;
+  img {
+    width: 52px;
+  }
+
+  .accent {
+    background: linear-gradient(90deg, #5b1cff, #a200ff);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  ${({ theme }) => theme.media.lg} {
+    display: none;
+  }
+`;
+
+/**
+ * Sidebar (1024px+): the full stacked logo. Both theme variants are rendered
+ * and CSS shows the one matching the active scheme, using the same rules as
+ * the palette (OS preference unless <html data-theme> overrides it), so the
+ * right logo is there on first paint with no hydration mismatch.
+ */
+const FullLogo = styled.span`
+  display: none;
+
+  img {
+    width: 156px;
+  }
+
+  .logo-dark {
+    display: none;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) & .logo-dark {
+      display: block;
+    }
+    :root:not([data-theme='light']) & .logo-light {
+      display: none;
+    }
+  }
+
+  :root[data-theme='dark'] & .logo-dark {
+    display: block;
+  }
+  :root[data-theme='dark'] & .logo-light {
+    display: none;
+  }
+
+  ${({ theme }) => theme.media.lg} {
+    display: block;
+    margin: ${({ theme }) => `0 auto ${theme.space(2)}`};
   }
 `;
 
@@ -263,8 +331,17 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <Chrome>
         <Brand href="/" aria-label="WaveMusic home">
-          <LogoMark />
-          <span className="brand-name">WaveMusic</span>
+          <FullLogo>
+            {/* Decorative: the link's aria-label names it. */}
+            <Image src={logoLight} alt="" className="logo-light" sizes="156px" />
+            <Image src={logoDark} alt="" className="logo-dark" sizes="156px" />
+          </FullLogo>
+          <CompactLogo>
+            <Image src={waveMark} alt="" sizes="52px" />
+            <span aria-hidden="true">
+              Wave<span className="accent">Music</span>
+            </span>
+          </CompactLogo>
         </Brand>
         <Tools>
           <Nav />
