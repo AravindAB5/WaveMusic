@@ -1,5 +1,5 @@
 import { connection } from 'next/server';
-import { AlbumGrid } from '@/components/albums/AlbumGrid';
+import { AlbumBrowser } from '@/components/albums/AlbumBrowser';
 import { PageContainer, PageHeader } from '@/components/layout/PageContainer';
 import { getTopAlbums } from '@/lib/itunes/fetchTopAlbums';
 
@@ -20,7 +20,7 @@ export default async function HomePage() {
             : 'The most popular albums on iTunes right now.'}
         </p>
       </PageHeader>
-      <AlbumGrid albums={albums} />
+      <AlbumBrowser albums={albums} />
     </PageContainer>
   );
 }

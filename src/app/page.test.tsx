@@ -7,6 +7,7 @@ import HomePage from './page';
 
 jest.mock('next/server', () => ({ connection: jest.fn().mockResolvedValue(undefined) }));
 jest.mock('@/lib/itunes/fetchTopAlbums', () => ({ getTopAlbums: jest.fn() }));
+jest.mock('next/navigation', () => ({ useSearchParams: () => new URLSearchParams() }));
 
 const getTopAlbumsMock = jest.mocked(getTopAlbums);
 
@@ -20,6 +21,7 @@ describe('HomePage (server component)', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Top Albums' })).toBeInTheDocument();
     expect(screen.getByText('The 3 most popular albums on iTunes right now.')).toBeInTheDocument();
     expect(screen.getAllByRole('listitem')).toHaveLength(3);
+    expect(screen.getByRole('search', { name: 'Filter albums' })).toBeInTheDocument();
   });
 
   it('renders the empty state when the feed has no albums', async () => {
