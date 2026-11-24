@@ -15,7 +15,10 @@ export interface Price {
 export interface Album {
   /** iTunes collection id; also the key for the Lookup API. */
   id: string;
-  /** 1-based chart position, from the order of the feed. */
+  /**
+   * 1-based chart position, from the order of the feed. 0 for an album built
+   * from a direct Lookup (not in the chart), see `UNRANKED`.
+   */
   rank: number;
   title: string;
   artist: string;
@@ -51,4 +54,28 @@ export interface TopAlbumsFeed {
   /** When Apple last regenerated the feed (ISO 8601), if reported. */
   updatedAt: string | null;
   skipped: FeedIssue[];
+}
+
+/** `Album.rank` for albums that came from a direct Lookup rather than the chart. */
+export const UNRANKED = 0;
+
+/** One song on an album, from the iTunes Lookup API. */
+export interface Track {
+  id: string;
+  title: string;
+  /** Per-track performer; differs from the album artist on compilations. */
+  artist: string;
+  trackNumber: number;
+  discNumber: number;
+  durationMs: number | null;
+  /** ~30s AAC preview; null when Apple doesn't offer one. */
+  previewUrl: string | null;
+  explicit: boolean;
+}
+
+/** Result of looking up one album: its details and its songs, in play order. */
+export interface AlbumLookup {
+  /** Null when iTunes doesn't know the id (unknown or withdrawn album). */
+  album: Album | null;
+  tracks: Track[];
 }

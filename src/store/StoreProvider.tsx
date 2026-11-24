@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { setupListeners } from '@reduxjs/toolkit/query';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Provider } from 'react-redux';
 import { useFavoritesStorageSync } from '@/features/favorites/useFavoritesStorageSync';
 import { makeStore } from './store';
@@ -13,5 +14,7 @@ import { makeStore } from './store';
 export function StoreProvider({ children }: { children: ReactNode }) {
   const [store] = useState(() => makeStore());
   useFavoritesStorageSync(store);
+  // Lets RTK Query refetch failed or stale queries when the browser comes back online.
+  useEffect(() => setupListeners(store.dispatch), [store]);
   return <Provider store={store}>{children}</Provider>;
 }

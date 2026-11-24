@@ -7,9 +7,10 @@ import {
 } from '@/features/favorites/favoritesSlice';
 import { saveFavorites } from '@/features/favorites/storage';
 import { filtersSlice } from '@/features/filters/filtersSlice';
+import { itunesApi } from './itunesApi';
 
-/** The player and the RTK Query API slice join here in later steps. */
-export const rootReducer = combineSlices(filtersSlice, favoritesSlice);
+/** The player slice joins here in a later step. */
+export const rootReducer = combineSlices(filtersSlice, favoritesSlice, itunesApi);
 
 export type RootState = ReturnType<typeof rootReducer>;
 
@@ -31,7 +32,7 @@ export const makeStore = (preloadedState?: Partial<RootState>) => {
   return configureStore({
     reducer: rootReducer,
     preloadedState,
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().prepend(listener.middleware),
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().prepend(listener.middleware).concat(itunesApi.middleware),
   });
 };
 
