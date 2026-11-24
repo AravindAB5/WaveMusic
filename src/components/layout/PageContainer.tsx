@@ -11,10 +11,19 @@ export const PageContainer = styled.main`
   ${({ theme }) => theme.media.md} {
     padding: ${({ theme }) => `${theme.space(8)} ${theme.space(6)}`};
   }
+`;
+
+/** Page title block: an h1 and an optional muted subtitle paragraph. */
+export const PageHeader = styled.header`
+  margin-bottom: ${({ theme }) => theme.space(6)};
 
   h1 {
-    font-size: ${({ theme }) => theme.fontSizes.xxl};
-    margin-bottom: ${({ theme }) => theme.space(2)};
+    font-size: ${({ theme }) => theme.fontSizes.xl};
+    margin-bottom: ${({ theme }) => theme.space(1)};
+
+    ${({ theme }) => theme.media.md} {
+      font-size: ${({ theme }) => theme.fontSizes.xxl};
+    }
   }
 
   p {
