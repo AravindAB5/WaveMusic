@@ -17,6 +17,13 @@ const visibleTitles = () =>
     .getAllByRole('heading', { level: 2 })
     .map((h) => h.textContent);
 const flushUrlWrite = () => act(() => jest.advanceTimersByTime(URL_WRITE_DELAY_MS));
+/** Genre chips are toggle buttons named "<genre> <count>". */
+const genreChips = () => within(screen.getByRole('group', { name: 'Genre' })).getAllByRole('button');
+const genreChip = (genre: string) => {
+  const chip = genreChips().find((button) => button.textContent?.replace(/ \d+$/, '') === genre);
+  if (!chip) throw new Error(`No genre chip for ${genre}`);
+  return chip;
+};
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -38,7 +45,9 @@ describe('AlbumBrowser', () => {
     setup();
     expect(visibleTitles()).toHaveLength(5);
     expect(screen.getByRole('status')).toHaveTextContent('Showing all 5 albums');
-    expect(screen.getByRole('button', { name: 'Clear filters' })).toBeDisabled();
+    // Nothing to clear yet, so no "Clear filters" control.
+    expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
+    expect(genreChip('All')).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('restores filters from the URL on the first render (shareable links)', () => {
@@ -46,7 +55,8 @@ describe('AlbumBrowser', () => {
     const { store } = setup();
 
     expect(selectFilters(store.getState())).toEqual({ query: '', genre: 'Country', sort: 'oldest', favoritesOnly: false });
-    expect(screen.getByLabelText('Genre')).toHaveValue('Country');
+    expect(genreChip('Country')).toHaveAttribute('aria-pressed', 'true');
+    expect(genreChip('All')).toHaveAttribute('aria-pressed', 'false');
     expect(screen.getByLabelText('Sort by')).toHaveValue('oldest');
     expect(visibleTitles()).toEqual(['Cowboy Carter', 'Grateful']);
     expect(screen.getByRole('status')).toHaveTextContent('Showing 2 of 5 albums');
@@ -77,17 +87,33 @@ describe('AlbumBrowser', () => {
   it('syncs genre and sort to the URL', async () => {
     const { user } = setup();
 
-    await user.selectOptions(screen.getByLabelText('Genre'), 'R&B/Soul');
+    await user.click(genreChip('R&B/Soul'));
     await user.selectOptions(screen.getByLabelText('Sort by'), 'newest');
     flushUrlWrite();
 
     expect(window.location.search).toBe('?genre=R%26B%2FSoul&sort=newest');
   });
 
-  it('lists genres with counts', () => {
+  it('lists genres as chips with counts', () => {
     setup();
-    const options = within(screen.getByLabelText('Genre')).getAllByRole('option').map((o) => o.textContent);
-    expect(options).toEqual(['All genres (5)', 'Country (2)', 'Pop (1)', 'R&B/Soul (1)', 'Rock (1)']);
+    expect(genreChips().map((chip) => chip.textContent)).toEqual(['All 5', 'Country 2', 'Pop 1', 'R&B/Soul 1', 'Rock 1']);
+  });
+
+  it('toggles a genre chip off again, back to all genres', async () => {
+    const { user, store } = setup();
+    await user.click(genreChip('Rock'));
+    expect(selectFilters(store.getState()).genre).toBe('Rock');
+    await user.click(genreChip('Rock'));
+    expect(selectFilters(store.getState()).genre).toBeNull();
+    expect(genreChip('All')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('offers "Clear filters" once something is filtered', async () => {
+    const { user } = setup();
+    await user.click(genreChip('Pop'));
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }));
+    expect(visibleTitles()).toHaveLength(5);
+    expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
   });
 
   it('canonicalizes a messy URL (invalid sort, empty query)', () => {
@@ -130,8 +156,8 @@ describe('AlbumBrowser', () => {
   it('keeps a stale genre from the URL selectable and offers to clear it', () => {
     setUrl('/?genre=Polka');
     setup();
-    expect(screen.getByLabelText('Genre')).toHaveValue('Polka');
-    expect(screen.getByRole('option', { name: 'Polka (0)' })).toBeInTheDocument();
+    expect(genreChip('Polka')).toHaveAttribute('aria-pressed', 'true');
+    expect(genreChip('Polka')).toHaveTextContent('Polka 0');
     expect(screen.getByRole('heading', { name: 'No albums match' })).toBeInTheDocument();
   });
 

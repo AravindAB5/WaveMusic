@@ -53,7 +53,7 @@ describe('favorites and hydration', () => {
     expect(onRecoverableError).not.toHaveBeenCalled();
 
     // Right after hydration the real values appear.
-    expect(screen.getByRole('button', { name: 'Favorites (1)' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Favorites 1' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: `Favorite ${album.title}` })).toHaveAttribute('aria-pressed', 'true');
   });
 });

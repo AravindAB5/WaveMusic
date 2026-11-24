@@ -25,8 +25,6 @@ import {
 /** iTunes previews are ~30s; used for the scrubber until real metadata loads. */
 const FALLBACK_DURATION = 30;
 
-const PLAYER_HEIGHT = { mobile: 116, desktop: 80 };
-
 const Bar = styled.section`
   position: fixed;
   right: 0;
@@ -34,36 +32,133 @@ const Bar = styled.section`
   left: 0;
   z-index: ${({ theme }) => theme.zIndices.player};
   border-top: 1px solid ${({ theme }) => theme.colors.border};
-  background: ${({ theme }) => theme.colors.surface};
-  box-shadow: ${({ theme }) => theme.shadows.lg};
+  background: color-mix(in srgb, ${({ theme }) => theme.colors.surface} 92%, transparent);
+  backdrop-filter: saturate(1.4) blur(18px);
   padding-bottom: env(safe-area-inset-bottom);
 `;
 
 const Inner = styled.div`
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto auto;
-  grid-template-areas:
-    'art info controls close'
-    'progress progress progress progress';
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-areas: 'now controls actions';
   align-items: center;
-  column-gap: ${({ theme }) => theme.space(3)};
-  row-gap: ${({ theme }) => theme.space(1)};
-  max-width: ${({ theme }) => theme.layout.maxWidth};
-  min-height: ${PLAYER_HEIGHT.mobile}px;
-  margin: 0 auto;
-  padding: ${({ theme }) => `${theme.space(2)} ${theme.space(4)}`};
+  gap: ${({ theme }) => theme.space(2)};
+  height: ${({ theme }) => theme.layout.playerHeightMobile};
+  padding: ${({ theme }) => `0 ${theme.space(2)} 0 ${theme.space(3)}`};
 
   ${({ theme }) => theme.media.md} {
-    grid-template-columns: 48px minmax(0, 1fr) auto minmax(200px, 2fr) auto;
-    grid-template-areas: 'art info controls progress close';
-    min-height: ${PLAYER_HEIGHT.desktop}px;
-    padding: ${({ theme }) => `${theme.space(2)} ${theme.space(6)}`};
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1fr);
+    grid-template-areas: 'controls now actions';
+    gap: ${({ theme }) => theme.space(4)};
+    height: ${({ theme }) => theme.layout.playerHeight};
+    padding: ${({ theme }) => `0 ${theme.space(4)}`};
+  }
+`;
+
+/**
+ * Seek bar along the top edge: a thin line that thickens and shows a thumb on
+ * hover/focus. The native range input keeps it keyboard- and AT-operable.
+ */
+const Scrubber = styled.input`
+  --track: ${({ theme }) => theme.colors.surfaceHover};
+  --fill: ${({ theme }) => theme.colors.accent};
+  position: absolute;
+  top: -8px;
+  right: 0;
+  left: 0;
+  width: 100%;
+  height: 16px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+
+  &::-webkit-slider-runnable-track {
+    height: 3px;
+    background: linear-gradient(to right, var(--fill) var(--progress), var(--track) var(--progress));
+    transition: height ${({ theme }) => theme.transitions.fast};
+  }
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    margin-top: -5.5px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--fill);
+    opacity: 0;
+    transition: opacity ${({ theme }) => theme.transitions.fast};
+  }
+  &::-moz-range-track {
+    height: 3px;
+    background: var(--track);
+  }
+  &::-moz-range-progress {
+    height: 3px;
+    background: var(--fill);
+  }
+  &::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--fill);
+    opacity: 0;
+  }
+
+  &:hover::-webkit-slider-thumb,
+  &:focus-visible::-webkit-slider-thumb {
+    opacity: 1;
+  }
+  &:hover::-moz-range-thumb,
+  &:focus-visible::-moz-range-thumb {
+    opacity: 1;
+  }
+  &:focus-visible {
+    outline: none;
+  }
+  &:focus-visible::-webkit-slider-runnable-track {
+    outline: 2px solid ${({ theme }) => theme.colors.focus};
+    outline-offset: 3px;
+  }
+`;
+
+const Controls = styled.div`
+  grid-area: controls;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space(1)};
+`;
+
+const Time = styled.span`
+  display: none;
+  margin-left: ${({ theme }) => theme.space(2)};
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.textMuted};
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  ${({ theme }) => theme.media.md} {
+    display: inline;
+  }
+`;
+
+const Now = styled.div`
+  grid-area: now;
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.space(3)};
+  min-width: 0;
+
+  ${({ theme }) => theme.media.md} {
+    justify-content: center;
   }
 `;
 
 const Art = styled.div`
-  grid-area: art;
   position: relative;
+  flex: none;
   width: 48px;
   height: 48px;
   overflow: hidden;
@@ -72,7 +167,6 @@ const Art = styled.div`
 `;
 
 const Info = styled.div`
-  grid-area: info;
   min-width: 0;
 
   p {
@@ -83,7 +177,7 @@ const Info = styled.div`
 `;
 
 const NowTitle = styled.p`
-  font-weight: ${({ theme }) => theme.fontWeights.medium};
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
 `;
 
 const NowSub = styled.p`
@@ -94,6 +188,7 @@ const NowSub = styled.p`
     text-decoration: none;
 
     &:hover {
+      color: ${({ theme }) => theme.colors.text};
       text-decoration: underline;
     }
   }
@@ -104,68 +199,59 @@ const ErrorText = styled.p`
   color: ${({ theme }) => theme.colors.danger};
 `;
 
-const Controls = styled.div`
-  grid-area: controls;
+const Actions = styled.div`
+  grid-area: actions;
   display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.space(1)};
+  justify-content: flex-end;
 `;
 
-const IconButton = styled.button<{ $primary?: boolean }>`
-  display: inline-flex;
+const IconButton = styled.button<{ $primary?: boolean; $desktopOnly?: boolean }>`
+  display: ${({ $desktopOnly }) => ($desktopOnly ? 'none' : 'inline-flex')};
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: ${({ $primary }) => ($primary ? '48px' : '44px')};
+  height: ${({ $primary }) => ($primary ? '48px' : '44px')};
   padding: 0;
   border: 0;
   border-radius: ${({ theme }) => theme.radii.pill};
-  background: ${({ $primary, theme }) => ($primary ? theme.colors.accent : 'transparent')};
-  color: ${({ $primary, theme }) => ($primary ? theme.colors.accentContrast : theme.colors.text)};
+  background: ${({ $primary, theme }) => ($primary ? theme.colors.text : 'transparent')};
+  color: ${({ $primary, theme }) => ($primary ? theme.colors.bg : theme.colors.text)};
+  transition:
+    background ${({ theme }) => theme.transitions.fast},
+    transform ${({ theme }) => theme.transitions.fast};
 
   &:hover:not(:disabled) {
-    background: ${({ $primary, theme }) => ($primary ? theme.colors.accentHover : theme.colors.surfaceRaised)};
+    background: ${({ $primary, theme }) => ($primary ? theme.colors.text : theme.colors.surfaceHover)};
+    transform: ${({ $primary }) => ($primary ? 'scale(1.05)' : 'none')};
   }
 
   &:disabled {
     cursor: default;
-    opacity: 0.4;
+    opacity: 0.35;
   }
 
   svg {
-    width: ${({ $primary }) => ($primary ? '20px' : '18px')};
-    height: ${({ $primary }) => ($primary ? '20px' : '18px')};
+    width: ${({ $primary }) => ($primary ? '22px' : '20px')};
+    height: ${({ $primary }) => ($primary ? '22px' : '20px')};
   }
-`;
 
-const Progress = styled.div`
-  grid-area: progress;
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  gap: ${({ theme }) => theme.space(2)};
-  font-size: ${({ theme }) => theme.fontSizes.xs};
-  color: ${({ theme }) => theme.colors.textMuted};
-  font-variant-numeric: tabular-nums;
-
-  input {
-    width: 100%;
-    accent-color: ${({ theme }) => theme.colors.accent};
-    cursor: pointer;
+  ${({ theme }) => theme.media.md} {
+    display: inline-flex;
   }
-`;
-
-const Close = styled.div`
-  grid-area: close;
 `;
 
 /** Keeps page content from ending up underneath the fixed bar. */
 const Spacer = styled.div`
-  height: ${PLAYER_HEIGHT.mobile}px;
+  height: ${({ theme }) => theme.layout.playerHeightMobile};
 
   ${({ theme }) => theme.media.md} {
-    height: ${PLAYER_HEIGHT.desktop}px;
+    height: ${({ theme }) => theme.layout.playerHeight};
   }
+`;
+
+const MobileRow = styled.div`
+  display: flex;
+  align-items: center;
 `;
 
 /**
@@ -185,7 +271,10 @@ export function MiniPlayer() {
   if (!current) return null;
 
   const max = duration > 0 ? duration : FALLBACK_DURATION;
-  const valueText = `${formatDuration(position * 1000)} of ${formatDuration(max * 1000)}`;
+  const clamped = Math.min(position, max);
+  const elapsed = formatDuration(clamped * 1000);
+  const total = formatDuration(max * 1000);
+  const progressStyle = { '--progress': `${(clamped / max) * 100}%` } as React.CSSProperties;
 
   return (
     <>
@@ -195,58 +284,72 @@ export function MiniPlayer() {
         <VisuallyHidden role="status" aria-live="polite">
           {`Now playing: ${current.title} by ${current.artist}`}
         </VisuallyHidden>
+        <Scrubber
+          type="range"
+          min={0}
+          max={max}
+          step={0.1}
+          value={clamped}
+          style={progressStyle}
+          aria-label="Seek"
+          aria-valuetext={`${elapsed} of ${total}`}
+          onChange={(event) => dispatch(seekRequested(Number(event.target.value)))}
+        />
         <Inner>
-          <Art>
-            <Image src={current.album.artworkUrl} alt="" fill sizes="48px" />
-          </Art>
-          <Info>
-            <NowTitle title={current.title}>{current.title}</NowTitle>
-            {error ? (
-              <ErrorText role="alert">
-                {error === 'blocked' ? 'Press play to start the preview.' : "This preview couldn't be played."}
-              </ErrorText>
-            ) : (
-              <NowSub>
-                {current.artist} · <Link href={`/album/${current.album.id}`}>{current.album.title}</Link>
-              </NowSub>
-            )}
-          </Info>
           <Controls>
-            <IconButton type="button" onClick={() => dispatch(previousRequested())} aria-label="Previous track">
-              <PreviousIcon />
-            </IconButton>
-            <IconButton
-              type="button"
-              $primary
-              onClick={() => dispatch(togglePlayback())}
-              aria-label={isPlaying ? 'Pause' : 'Play'}
-              aria-busy={isBuffering && isPlaying}
-            >
-              {isPlaying ? <PauseIcon /> : <PlayIcon />}
-            </IconButton>
-            <IconButton type="button" onClick={() => dispatch(nextRequested())} disabled={!hasNext} aria-label="Next track">
-              <NextIcon />
-            </IconButton>
+            <MobileRow>
+              <IconButton
+                type="button"
+                $desktopOnly
+                onClick={() => dispatch(previousRequested())}
+                aria-label="Previous track"
+              >
+                <PreviousIcon />
+              </IconButton>
+              <IconButton
+                type="button"
+                $primary
+                onClick={() => dispatch(togglePlayback())}
+                aria-label={isPlaying ? 'Pause' : 'Play'}
+                aria-busy={isBuffering && isPlaying}
+              >
+                {isPlaying ? <PauseIcon /> : <PlayIcon />}
+              </IconButton>
+              <IconButton
+                type="button"
+                onClick={() => dispatch(nextRequested())}
+                disabled={!hasNext}
+                aria-label="Next track"
+              >
+                <NextIcon />
+              </IconButton>
+              <Time aria-hidden="true">
+                {elapsed} / {total}
+              </Time>
+            </MobileRow>
           </Controls>
-          <Progress>
-            <span aria-hidden="true">{formatDuration(position * 1000)}</span>
-            <input
-              type="range"
-              min={0}
-              max={max}
-              step={0.1}
-              value={Math.min(position, max)}
-              aria-label="Seek"
-              aria-valuetext={valueText}
-              onChange={(event) => dispatch(seekRequested(Number(event.target.value)))}
-            />
-            <span aria-hidden="true">{formatDuration(max * 1000)}</span>
-          </Progress>
-          <Close>
+          <Now>
+            <Art>
+              <Image src={current.album.artworkUrl} alt="" fill sizes="48px" />
+            </Art>
+            <Info>
+              <NowTitle title={current.title}>{current.title}</NowTitle>
+              {error ? (
+                <ErrorText role="alert">
+                  {error === 'blocked' ? 'Press play to start the preview.' : "This preview couldn't be played."}
+                </ErrorText>
+              ) : (
+                <NowSub>
+                  {current.artist} • <Link href={`/album/${current.album.id}`}>{current.album.title}</Link>
+                </NowSub>
+              )}
+            </Info>
+          </Now>
+          <Actions>
             <IconButton type="button" onClick={() => dispatch(playerClosed())} aria-label="Close player">
               <CloseIcon />
             </IconButton>
-          </Close>
+          </Actions>
         </Inner>
       </Bar>
     </>

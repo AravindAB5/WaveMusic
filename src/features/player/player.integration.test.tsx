@@ -6,7 +6,9 @@ import { parseAlbumLookup } from '@/lib/itunes/mapLookup';
 import { renderWithProviders } from '@/test/render';
 import { AudioEngine } from './AudioEngine';
 import { MiniPlayer } from './MiniPlayer';
+import { PlayAllButton } from './PlayAllButton';
 import { playbackFailed } from './playerSlice';
+import { buildQueue } from './queue';
 
 const { album, tracks } = parseAlbumLookup(lookupResponse('album'), ALBUM_ID);
 const [first, second, third] = tracks as [(typeof tracks)[0], (typeof tracks)[0], (typeof tracks)[0]];
@@ -28,7 +30,8 @@ const setup = (trackList = tracks) => {
   const view = renderWithProviders(
     <>
       <section aria-label="Album tracks">
-        <TrackList tracks={trackList} album={album!} />
+        <PlayAllButton albumId={album!.id} queue={buildQueue(album!, trackList)} />
+        <TrackList tracks={trackList} albumArtist={album!.artist} queue={buildQueue(album!, trackList)} />
       </section>
       <MiniPlayer />
       <AudioEngine />
@@ -93,7 +96,10 @@ describe('preview playback', () => {
     expect(audio().getAttribute('src')).toBe(third.previewUrl);
     expect(within(player()).getByRole('button', { name: 'Next track' })).toBeDisabled();
 
-    await user.click(within(player()).getByRole('button', { name: 'Previous track' }));
+    // "Previous" is desktop-only (shown via a min-width media query, which
+    // jsdom doesn't evaluate), so it's display:none here and has no computed
+    // accessible name; find it by its aria-label instead.
+    fireEvent.click(within(player()).getByLabelText('Previous track'));
     expect(audio().getAttribute('src')).toBe(second.previewUrl);
   });
 
@@ -112,14 +118,14 @@ describe('preview playback', () => {
     expect(audio().currentTime).toBe(15);
   });
 
-  it('"Play previews" starts at the top, then pauses and resumes the album', async () => {
+  it('"Play album previews" starts at the top, then pauses and resumes the album', async () => {
     const { user, audio, tracksSection } = setup();
 
-    await user.click(within(tracksSection()).getByRole('button', { name: 'Play previews' }));
+    await user.click(within(tracksSection()).getByRole('button', { name: 'Play album previews' }));
     expect(audio().getAttribute('src')).toBe(first.previewUrl);
 
-    await user.click(within(tracksSection()).getByRole('button', { name: 'Pause' }));
-    expect(within(tracksSection()).getByRole('button', { name: 'Resume' })).toBeInTheDocument();
+    await user.click(within(tracksSection()).getByRole('button', { name: 'Pause album' }));
+    expect(within(tracksSection()).getByRole('button', { name: 'Resume album' })).toBeInTheDocument();
   });
 
   it('disables tracks without a preview and leaves them out of the queue', async () => {
@@ -127,7 +133,7 @@ describe('preview playback', () => {
     const { user, player, audio } = setup(withGap);
 
     expect(screen.getByRole('button', { name: `No preview available for ${second.title}` })).toBeDisabled();
-    expect(screen.getByText(/2 with previews/)).toBeInTheDocument();
+    expect(screen.getByText('2 of 3 songs have previews.')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: `Play preview of ${first.title}` }));
     await user.click(within(player()).getByRole('button', { name: 'Next track' }));

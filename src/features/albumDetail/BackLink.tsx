@@ -2,22 +2,35 @@
 
 import Link from 'next/link';
 import styled from 'styled-components';
+import { ChevronLeftIcon } from '@/components/layout/icons';
 import { selectFilters } from '@/features/filters/filtersSlice';
 import { serializeFilters } from '@/features/filters/urlState';
 import { useAppSelector } from '@/store/hooks';
 
 const StyledLink = styled(Link)`
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: ${({ theme }) => theme.space(1)};
-  min-height: 44px;
-  margin-bottom: ${({ theme }) => theme.space(4)};
-  color: ${({ theme }) => theme.colors.textMuted};
+  min-height: 40px;
+  margin-bottom: ${({ theme }) => theme.space(6)};
+  padding: ${({ theme }) => `0 ${theme.space(4)} 0 ${theme.space(2)}`};
+  border-radius: ${({ theme }) => theme.radii.pill};
+  background: color-mix(in srgb, ${({ theme }) => theme.colors.surfaceRaised} 80%, transparent);
+  color: ${({ theme }) => theme.colors.text};
   font-size: ${({ theme }) => theme.fontSizes.sm};
+  font-weight: ${({ theme }) => theme.fontWeights.medium};
   text-decoration: none;
+  backdrop-filter: blur(8px);
+  transition: background ${({ theme }) => theme.transitions.fast};
 
   &:hover {
-    color: ${({ theme }) => theme.colors.text};
+    background: ${({ theme }) => theme.colors.surfaceHover};
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
   }
 `;
 
@@ -33,7 +46,7 @@ export function BackLink() {
 
   return (
     <StyledLink href={query ? `/?${query}` : '/'}>
-      <span aria-hidden="true">←</span> Top Albums
+      <ChevronLeftIcon /> Top Albums
     </StyledLink>
   );
 }

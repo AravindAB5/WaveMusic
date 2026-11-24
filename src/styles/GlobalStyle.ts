@@ -30,10 +30,27 @@ export const GlobalStyle = createGlobalStyle`
     font-size: ${({ theme }) => theme.fontSizes.md};
     line-height: ${({ theme }) => theme.lineHeights.normal};
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: ${({ theme }) => theme.colors.accent};
+    color: ${({ theme }) => theme.colors.accentContrast};
+  }
+
+  /* Slim, theme-aware scrollbars. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: ${({ theme }) => `${theme.colors.surfaceHover} transparent`};
   }
 
   h1, h2, h3, h4, p, figure { margin: 0; }
-  h1, h2, h3, h4 { line-height: ${({ theme }) => theme.lineHeights.tight}; }
+  h1, h2, h3, h4 {
+    line-height: ${({ theme }) => theme.lineHeights.tight};
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
 
   img, svg, video { display: block; max-width: 100%; }
 

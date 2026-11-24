@@ -1,20 +1,34 @@
 'use client';
 
+import { useMemo } from 'react';
 import styled from 'styled-components';
 import { Button } from '@/components/ui/Button';
 import { StatusPanel } from '@/components/ui/StatusPanel';
+import { VisuallyHidden } from '@/components/ui/VisuallyHidden';
+import { buildQueue } from '@/features/player/queue';
 import { useGetAlbumLookupQuery } from '@/store/itunesApi';
 import type { Album } from '@/types/album';
+import { AlbumBackdrop } from './AlbumBackdrop';
 import { AlbumDetailSkeleton, TrackListSkeleton } from './AlbumDetailSkeleton';
 import { AlbumHeader } from './AlbumHeader';
 import { BackLink } from './BackLink';
 import { TrackList } from './TrackList';
 
-const Section = styled.section`
-  h2 {
-    margin-bottom: ${({ theme }) => theme.space(1)};
-    font-size: ${({ theme }) => theme.fontSizes.lg};
+/** Hero column + tracks column from 1024px; stacked and centered below. */
+const Layout = styled.div`
+  position: relative;
+  display: grid;
+  gap: ${({ theme }) => theme.space(8)};
+
+  ${({ theme }) => theme.media.lg} {
+    grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+    align-items: start;
+    gap: ${({ theme }) => theme.space(12)};
   }
+`;
+
+const Section = styled.section`
+  min-width: 0;
 `;
 
 interface AlbumDetailProps {
@@ -37,6 +51,8 @@ export function AlbumDetail({ albumId, chartAlbum }: AlbumDetailProps) {
 
   // Prefer the chart's copy: it carries the current rank.
   const album = chartAlbum ?? data?.album ?? null;
+  const tracks = data?.tracks ?? null;
+  const queue = useMemo(() => (album && tracks ? buildQueue(album, tracks) : []), [album, tracks]);
 
   const retry = (
     <Button type="button" onClick={() => refetch()} disabled={isFetching}>
@@ -75,26 +91,31 @@ export function AlbumDetail({ albumId, chartAlbum }: AlbumDetailProps) {
 
   return (
     <>
+      <AlbumBackdrop artworkUrl={album.artworkUrl} />
       <BackLink />
-      <AlbumHeader album={album} />
-      <Section aria-labelledby="tracks-heading">
-        <h2 id="tracks-heading">Tracks</h2>
-        {data ? (
-          data.tracks.length > 0 ? (
-            <TrackList tracks={data.tracks} album={album} />
-          ) : (
-            <StatusPanel title="No tracks available">
-              iTunes didn&apos;t list any songs for this album.
+      <Layout>
+        <AlbumHeader album={album} tracks={tracks} queue={queue} />
+        <Section aria-labelledby="tracks-heading">
+          <VisuallyHidden as="h2" id="tracks-heading">
+            Tracks
+          </VisuallyHidden>
+          {data ? (
+            data.tracks.length > 0 ? (
+              <TrackList tracks={data.tracks} albumArtist={album.artist} queue={queue} />
+            ) : (
+              <StatusPanel title="No tracks available">
+                iTunes didn&apos;t list any songs for this album.
+              </StatusPanel>
+            )
+          ) : error && !isFetching ? (
+            <StatusPanel role="alert" title="We couldn't load the tracks" action={retry}>
+              The album details are from the chart; the track list comes from a separate iTunes lookup.
             </StatusPanel>
-          )
-        ) : error && !isFetching ? (
-          <StatusPanel role="alert" title="We couldn't load the tracks" action={retry}>
-            The album details above are from the chart; the track list comes from a separate iTunes lookup.
-          </StatusPanel>
-        ) : (
-          <TrackListSkeleton />
-        )}
-      </Section>
+          ) : (
+            <TrackListSkeleton />
+          )}
+        </Section>
+      </Layout>
     </>
   );
 }

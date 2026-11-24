@@ -7,15 +7,15 @@ import { AlbumCard } from './AlbumCard';
 
 export const Grid = styled.ul`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: ${({ theme }) => theme.space(4)};
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: ${({ theme }) => `${theme.space(6)} ${theme.space(4)}`};
   margin: 0;
   padding: 0;
   list-style: none;
 
   ${({ theme }) => theme.media.md} {
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    gap: ${({ theme }) => theme.space(6)};
+    grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+    gap: ${({ theme }) => `${theme.space(8)} ${theme.space(6)}`};
   }
 `;
 

@@ -23,12 +23,7 @@ const Placeholder = styled(Artwork)`
   animation: ${pulse} 1.4s ease-in-out infinite;
 `;
 
-const StaticCard = styled(CardShell)`
-  &:hover {
-    transform: none;
-    box-shadow: none;
-  }
-`;
+const StaticCard = styled(CardShell)``;
 
 /** Same grid geometry as the real cards, so nothing shifts when data lands. */
 export function AlbumGridSkeleton({ count = 12 }: { count?: number }) {
@@ -43,7 +38,6 @@ export function AlbumGridSkeleton({ count = 12 }: { count?: number }) {
               <Body>
                 <Bar $width="85%" />
                 <Bar $width="60%" />
-                <Bar $width="40%" />
               </Body>
             </StaticCard>
           </li>

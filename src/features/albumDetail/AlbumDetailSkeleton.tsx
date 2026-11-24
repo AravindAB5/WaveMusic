@@ -19,25 +19,22 @@ const Bar = styled.span<{ $width: string; $height?: string }>`
   animation: ${pulse} 1.4s ease-in-out infinite;
 `;
 
-const HeaderShape = styled.div`
+/** Mirrors AlbumDetail's layout: hero column + tracks column from 1024px. */
+const LayoutShape = styled.div`
   display: grid;
-  gap: ${({ theme }) => theme.space(5)};
-  margin-bottom: ${({ theme }) => theme.space(8)};
-
-  ${({ theme }) => theme.media.md} {
-    grid-template-columns: 280px 1fr;
-    align-items: end;
-    gap: ${({ theme }) => theme.space(8)};
-  }
+  gap: ${({ theme }) => theme.space(8)};
 
   ${({ theme }) => theme.media.lg} {
-    grid-template-columns: 320px 1fr;
+    grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+    align-items: start;
+    gap: ${({ theme }) => theme.space(12)};
   }
 `;
 
-const Lines = styled.div`
+const HeaderShape = styled.div`
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: ${({ theme }) => theme.space(3)};
 `;
 
@@ -76,24 +73,24 @@ export function AlbumDetailSkeleton() {
     <div role="status">
       <VisuallyHidden>Loading album…</VisuallyHidden>
       <div aria-hidden="true">
-        <HeaderShape>
-          <PulsingCover />
-          <Lines>
-            <Bar $width="30%" $height="0.75rem" />
-            <Bar $width="70%" $height="2rem" />
-            <Bar $width="40%" $height="1.25rem" />
+        <LayoutShape>
+          <HeaderShape>
+            <Bar $width="35%" $height="0.75rem" />
+            <PulsingCover />
+            <Bar $width="70%" $height="1.75rem" />
+            <Bar $width="45%" $height="1.1rem" />
             <Bar $width="55%" />
-          </Lines>
-        </HeaderShape>
-        <List>
-          {Array.from({ length: 8 }, (_, i) => (
-            <Row key={i}>
-              <Bar $width="1.2rem" />
-              <Bar $width={`${50 + ((i * 17) % 40)}%`} />
-              <Bar $width="2.5rem" />
-            </Row>
-          ))}
-        </List>
+          </HeaderShape>
+          <List>
+            {Array.from({ length: 8 }, (_, i) => (
+              <Row key={i}>
+                <Bar $width="1.2rem" />
+                <Bar $width={`${50 + ((i * 17) % 40)}%`} />
+                <Bar $width="2.5rem" />
+              </Row>
+            ))}
+          </List>
+        </LayoutShape>
       </div>
     </div>
   );

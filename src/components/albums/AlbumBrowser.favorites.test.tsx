@@ -50,7 +50,7 @@ describe('AlbumBrowser favorites', () => {
     await user.click(screen.getByRole('button', { name: `Favorite ${clay.title}` }));
 
     expect(selectFavoriteIds(store.getState())).toEqual([clay.id]);
-    expect(screen.getByRole('button', { name: 'Favorites (1)' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'Favorites 1' })).toHaveAttribute('aria-pressed', 'false');
   });
 
   it('shows only favorites when toggled, and records it in the URL', async () => {
@@ -62,9 +62,9 @@ describe('AlbumBrowser favorites', () => {
       ]),
     });
 
-    await user.click(screen.getByRole('button', { name: 'Favorites (2)' }));
+    await user.click(screen.getByRole('button', { name: 'Favorites 2' }));
 
-    expect(screen.getByRole('button', { name: 'Favorites (2)' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Favorites 2' })).toHaveAttribute('aria-pressed', 'true');
     // Chart order (default sort), not favorited order.
     expect(titlesIn('Top albums')).toEqual([taylor.title, beyonce.title]);
     expect(screen.getByRole('status')).toHaveTextContent('Showing all 2 favorites');

@@ -10,14 +10,14 @@ const Panel = styled.section`
   gap: ${({ theme }) => theme.space(3)};
   max-width: 32rem;
   margin: ${({ theme }) => `${theme.space(12)} auto`};
-  padding: ${({ theme }) => theme.space(8)};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radii.lg};
-  background: ${({ theme }) => theme.colors.surface};
+  padding: ${({ theme }) => `${theme.space(10)} ${theme.space(8)}`};
+  border-radius: ${({ theme }) => theme.radii.xl};
+  background: ${({ theme }) => theme.colors.surfaceRaised};
   text-align: center;
 
   h2 {
     font-size: ${({ theme }) => theme.fontSizes.lg};
+    font-weight: ${({ theme }) => theme.fontWeights.semibold};
   }
 
   p {

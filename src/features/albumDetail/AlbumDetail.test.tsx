@@ -63,7 +63,8 @@ describe('AlbumDetail', () => {
 
     expect(screen.getByRole('heading', { level: 1, name: 'Grateful' })).toBeInTheDocument();
     expect(screen.getByText('Album')).toBeInTheDocument(); // no chart rank
-    expect(screen.getByText('Country · June 5, 2026 · 11 songs · $9.99')).toBeInTheDocument();
+    expect(screen.getByText('Country • June 5, 2026 • $9.99')).toBeInTheDocument();
+    expect(screen.getByText(/^3 songs, \d+ min$/)).toBeInTheDocument();
   });
 
   it('shows a full-page skeleton when nothing is known yet', () => {

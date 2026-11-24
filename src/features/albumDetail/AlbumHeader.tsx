@@ -2,31 +2,40 @@
 
 import Image from 'next/image';
 import styled from 'styled-components';
+import { ExternalIcon } from '@/components/layout/icons';
 import { VisuallyHidden } from '@/components/ui/VisuallyHidden';
 import { FavoriteButton } from '@/features/favorites/FavoriteButton';
-import { UNRANKED, type Album } from '@/types/album';
+import { PlayAllButton } from '@/features/player/PlayAllButton';
+import type { QueueItem } from '@/features/player/playerSlice';
+import { formatTotalDuration } from '@/lib/format';
+import { UNRANKED, type Album, type Track } from '@/types/album';
 
 const Header = styled.header`
-  display: grid;
-  gap: ${({ theme }) => theme.space(5)};
-  margin-bottom: ${({ theme }) => theme.space(8)};
-
-  ${({ theme }) => theme.media.md} {
-    grid-template-columns: 280px 1fr;
-    align-items: end;
-    gap: ${({ theme }) => theme.space(8)};
-  }
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: ${({ theme }) => theme.space(2)};
+  text-align: center;
 
   ${({ theme }) => theme.media.lg} {
-    grid-template-columns: 320px 1fr;
+    position: sticky;
+    top: ${({ theme }) => theme.space(8)};
   }
+`;
+
+const Eyebrow = styled.p`
+  font-size: ${({ theme }) => theme.fontSizes.xs};
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: ${({ theme }) => theme.colors.accent};
 `;
 
 export const Cover = styled.div`
   position: relative;
-  width: 100%;
-  max-width: 320px;
+  width: min(72vw, 280px);
   aspect-ratio: 1;
+  margin: ${({ theme }) => `${theme.space(1)} 0 ${theme.space(4)}`};
   overflow: hidden;
   border-radius: ${({ theme }) => theme.radii.lg};
   background: ${({ theme }) => theme.colors.surfaceRaised};
@@ -37,27 +46,13 @@ export const Cover = styled.div`
   }
 `;
 
-const Info = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.space(2)};
-  min-width: 0;
-`;
-
-const Eyebrow = styled.p`
-  font-size: ${({ theme }) => theme.fontSizes.xs};
-  font-weight: ${({ theme }) => theme.fontWeights.bold};
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: ${({ theme }) => theme.colors.accent};
-`;
-
 const Title = styled.h1`
   font-size: ${({ theme }) => theme.fontSizes.xl};
+  font-weight: ${({ theme }) => theme.fontWeights.bold};
   overflow-wrap: anywhere;
 
   ${({ theme }) => theme.media.md} {
-    font-size: 2.5rem;
+    font-size: ${({ theme }) => theme.fontSizes.xxl};
   }
 `;
 
@@ -81,76 +76,105 @@ const Meta = styled.p`
 
 const Actions = styled.div`
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: ${({ theme }) => theme.space(3)};
-  margin-top: ${({ theme }) => theme.space(2)};
+  gap: ${({ theme }) => theme.space(4)};
+  margin: ${({ theme }) => `${theme.space(4)} 0 ${theme.space(2)}`};
 `;
 
-const ExternalLink = styled.a`
+const RoundLink = styled.a`
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
-  padding: ${({ theme }) => `0 ${theme.space(5)}`};
+  justify-content: center;
+  width: 44px;
+  height: 44px;
   border-radius: ${({ theme }) => theme.radii.pill};
-  background: ${({ theme }) => theme.colors.accent};
-  color: ${({ theme }) => theme.colors.accentContrast};
-  font-weight: ${({ theme }) => theme.fontWeights.medium};
-  text-decoration: none;
+  background: ${({ theme }) => theme.colors.surfaceRaised};
+  color: ${({ theme }) => theme.colors.text};
+  transition: background ${({ theme }) => theme.transitions.fast};
 
   &:hover {
-    background: ${({ theme }) => theme.colors.accentHover};
+    background: ${({ theme }) => theme.colors.surfaceHover};
+  }
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+`;
+
+const FavoriteSlot = styled.div`
+  /* Match the round link's quiet style instead of the card overlay look. */
+  button {
+    background: ${({ theme }) => theme.colors.surfaceRaised};
+    color: ${({ theme }) => theme.colors.text};
+    backdrop-filter: none;
+  }
+
+  button[aria-pressed='true'] {
+    color: ${({ theme }) => theme.colors.accent};
+  }
+
+  button:hover {
+    background: ${({ theme }) => theme.colors.surfaceHover};
   }
 `;
 
 const Rights = styled.p`
+  max-width: 34ch;
   font-size: ${({ theme }) => theme.fontSizes.xs};
   color: ${({ theme }) => theme.colors.textMuted};
 `;
 
 interface AlbumHeaderProps {
   album: Album;
+  /** Null while the lookup is loading. */
+  tracks: readonly Track[] | null;
+  queue: readonly QueueItem[];
 }
 
-export function AlbumHeader({ album }: AlbumHeaderProps) {
-  const meta = [
-    album.genre,
-    album.releaseDateLabel ?? album.releaseYear,
-    album.trackCount !== null ? `${album.trackCount} ${album.trackCount === 1 ? 'song' : 'songs'}` : null,
-    album.price?.label,
-  ]
+export function AlbumHeader({ album, tracks, queue }: AlbumHeaderProps) {
+  const details = [album.genre, album.releaseDateLabel ?? album.releaseYear, album.price?.label]
     .filter(Boolean)
-    .join(' · ');
+    .join(' • ');
+
+  const totalMs = tracks?.reduce((sum, t) => sum + (t.durationMs ?? 0), 0) ?? 0;
+  const songCount = tracks?.length ?? album.trackCount;
+  const length =
+    songCount !== null && songCount > 0
+      ? `${songCount} ${songCount === 1 ? 'song' : 'songs'}${totalMs > 0 ? `, ${formatTotalDuration(totalMs)}` : ''}`
+      : null;
 
   return (
     <Header>
+      <Eyebrow>{album.rank !== UNRANKED ? `#${album.rank} in Top Albums` : 'Album'}</Eyebrow>
       <Cover>
         {/* Decorative: the h1 names the album. LCP element, so load it first. */}
-        <Image src={album.artworkUrlHiRes} alt="" fill priority sizes="(min-width: 1024px) 320px, (min-width: 768px) 280px, 100vw" />
+        <Image src={album.artworkUrlHiRes} alt="" fill priority sizes="280px" />
       </Cover>
-      <Info>
-        <Eyebrow>{album.rank !== UNRANKED ? `#${album.rank} in Top Albums` : 'Album'}</Eyebrow>
-        <Title>{album.title}</Title>
-        <Artist>
-          {album.artistUrl ? (
-            <a href={album.artistUrl} target="_blank" rel="noopener noreferrer">
-              {album.artist}
-              <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
-            </a>
-          ) : (
-            album.artist
-          )}
-        </Artist>
-        {meta && <Meta>{meta}</Meta>}
-        <Actions>
-          <FavoriteButton album={album} />
-          <ExternalLink href={album.url} target="_blank" rel="noopener noreferrer">
-            Open in Apple Music
+      <Title>{album.title}</Title>
+      <Artist>
+        {album.artistUrl ? (
+          <a href={album.artistUrl} target="_blank" rel="noopener noreferrer">
+            {album.artist}
             <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
-          </ExternalLink>
-        </Actions>
-        {album.rights && <Rights>{album.rights}</Rights>}
-      </Info>
+          </a>
+        ) : (
+          album.artist
+        )}
+      </Artist>
+      {details && <Meta>{details}</Meta>}
+      {length && <Meta>{length}</Meta>}
+      <Actions>
+        <FavoriteSlot>
+          <FavoriteButton album={album} />
+        </FavoriteSlot>
+        <PlayAllButton albumId={album.id} queue={queue} />
+        <RoundLink href={album.url} target="_blank" rel="noopener noreferrer" title="Open in Apple Music">
+          <ExternalIcon />
+          <VisuallyHidden>Open in Apple Music (opens in a new tab)</VisuallyHidden>
+        </RoundLink>
+      </Actions>
+      {album.rights && <Rights>{album.rights}</Rights>}
     </Header>
   );
 }

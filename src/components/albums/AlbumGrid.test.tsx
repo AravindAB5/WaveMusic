@@ -26,21 +26,28 @@ describe('AlbumGrid', () => {
     expect(screen.getAllByRole('link')).toHaveLength(albums.length);
   });
 
-  it('shows rank, artist and genre · year', () => {
+  it('shows rank, "artist • year" and genre', () => {
     renderWithProviders(<AlbumGrid albums={albums} />);
 
     const first = albums[0]!;
     const card = screen.getAllByRole('listitem')[0]!;
     // Visible "1", announced as "Rank 1".
     expect(card).toHaveTextContent(/Rank\s*1/);
-    expect(within(card).getByText(first.artist)).toBeInTheDocument();
-    expect(within(card).getByText(`${first.genre} · ${first.releaseYear}`)).toBeInTheDocument();
+    expect(within(card).getByText(`${first.artist} • ${first.releaseYear}`)).toBeInTheDocument();
+    expect(within(card).getByText(first.genre)).toBeInTheDocument();
   });
 
   it('omits the year when the album has none', () => {
     const [first] = albums;
     renderWithProviders(<AlbumGrid albums={[{ ...first!, releaseYear: null }]} />);
-    expect(screen.getByText(first!.genre)).toBeInTheDocument();
+    expect(screen.getByText(first!.artist)).toBeInTheDocument();
+  });
+
+  it('gives each card a named play button and favorite toggle', () => {
+    renderWithProviders(<AlbumGrid albums={albums} />);
+    const first = albums[0]!;
+    expect(screen.getByRole('button', { name: `Play previews of ${first.title}` })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: `Favorite ${first.title}` })).toBeInTheDocument();
   });
 
   it('treats artwork as decorative', () => {

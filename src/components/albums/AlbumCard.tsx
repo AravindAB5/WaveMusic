@@ -5,42 +5,63 @@ import Link from 'next/link';
 import styled from 'styled-components';
 import { VisuallyHidden } from '@/components/ui/VisuallyHidden';
 import { FavoriteButton } from '@/features/favorites/FavoriteButton';
+import { useIsFavorite } from '@/features/favorites/useFavorites';
+import { AlbumPlayButton } from '@/features/player/AlbumPlayButton';
+import { useIsAlbumCurrent } from '@/features/player/usePlayback';
 import type { Album } from '@/types/album';
 
 export const CardShell = styled.article`
   position: relative;
   display: flex;
   flex-direction: column;
+  gap: ${({ theme }) => theme.space(3)};
   height: 100%;
-  overflow: hidden;
-  border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.radii.md};
-  background: ${({ theme }) => theme.colors.surface};
-  transition:
-    transform ${({ theme }) => theme.transitions.normal},
-    box-shadow ${({ theme }) => theme.transitions.normal};
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: ${({ theme }) => theme.shadows.md};
-  }
 
   /* The title link is stretched over the card, so show its focus ring here.
-     :has(:focus-visible) rather than :focus-within, so a mouse click on the
-     favorite button doesn't ring the whole card. */
-  &:has(:focus-visible) {
+     :has(:focus-visible) rather than :focus-within, so a mouse click on a
+     card button doesn't ring the whole card. */
+  &:has(a:focus-visible) {
     outline: 2px solid ${({ theme }) => theme.colors.focus};
-    outline-offset: 2px;
+    outline-offset: 4px;
   }
 `;
 
 export const Artwork = styled.div`
   position: relative;
   aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: ${({ theme }) => theme.radii.md};
   background: ${({ theme }) => theme.colors.surfaceRaised};
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+  transition: box-shadow ${({ theme }) => theme.transitions.normal};
 
   img {
     object-fit: cover;
+    transition: transform 400ms ease-out;
+  }
+
+  /* Darkens the art behind the controls on hover/focus. */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent 55%);
+    opacity: 0;
+    transition: opacity ${({ theme }) => theme.transitions.normal};
+  }
+
+  ${CardShell}:hover &,
+  ${CardShell}:focus-within & {
+    box-shadow: ${({ theme }) => theme.shadows.md};
+
+    &::after {
+      opacity: 1;
+    }
+  }
+
+  ${CardShell}:hover & img {
+    transform: scale(1.04);
   }
 `;
 
@@ -48,31 +69,39 @@ const Rank = styled.span`
   position: absolute;
   top: ${({ theme }) => theme.space(2)};
   left: ${({ theme }) => theme.space(2)};
-  min-width: 28px;
-  padding: ${({ theme }) => `2px ${theme.space(2)}`};
-  border-radius: ${({ theme }) => theme.radii.pill};
+  z-index: 1;
+  min-width: 26px;
+  padding: ${({ theme }) => `1px ${theme.space(2)}`};
+  border-radius: ${({ theme }) => theme.radii.sm};
   background: ${({ theme }) => theme.colors.overlay};
   color: #fff;
   font-size: ${({ theme }) => theme.fontSizes.xs};
-  font-weight: ${({ theme }) => theme.fontWeights.bold};
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  font-variant-numeric: tabular-nums;
   text-align: center;
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(6px);
 `;
 
 export const Body = styled.div`
   display: flex;
   flex-direction: column;
-  gap: ${({ theme }) => theme.space(1)};
-  padding: ${({ theme }) => theme.space(3)};
+  gap: 2px;
+  min-width: 0;
 `;
 
 const Title = styled.h2`
   font-size: ${({ theme }) => theme.fontSizes.sm};
-  font-weight: ${({ theme }) => theme.fontWeights.bold};
+  font-weight: ${({ theme }) => theme.fontWeights.semibold};
+  line-height: 1.35;
+  letter-spacing: 0;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+
+  ${({ theme }) => theme.media.md} {
+    font-size: ${({ theme }) => theme.fontSizes.md};
+  }
 
   a {
     text-decoration: none;
@@ -91,29 +120,65 @@ const Title = styled.h2`
   }
 `;
 
-const Artist = styled.p`
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  color: ${({ theme }) => theme.colors.text};
-  white-space: nowrap;
+const Subtitle = styled.p`
   overflow: hidden;
+  font-size: ${({ theme }) => theme.fontSizes.sm};
+  color: ${({ theme }) => theme.colors.textMuted};
+  white-space: nowrap;
   text-overflow: ellipsis;
 `;
 
-/** Sits above the stretched link so it stays independently clickable. */
-const FavoriteSlot = styled.div`
+/**
+ * Controls layered over the artwork, above the stretched link. Hidden until
+ * the card is hovered or focused; always visible on touch screens (no hover)
+ * and while they carry state (playing / favorited).
+ */
+const Controls = styled.div`
   position: absolute;
-  top: ${({ theme }) => theme.space(2)};
-  right: ${({ theme }) => theme.space(2)};
+  top: 0;
+  right: 0;
+  left: 0;
   z-index: 1;
+  aspect-ratio: 1;
+  pointer-events: none;
+
+  > * {
+    position: absolute;
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateY(4px);
+    transition:
+      opacity ${({ theme }) => theme.transitions.normal},
+      transform ${({ theme }) => theme.transitions.normal};
+  }
+
+  ${CardShell}:hover &> *,
+  ${CardShell}:focus-within &> *,
+  > [data-active='true'] {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (hover: none) {
+    > * {
+      opacity: 1;
+      transform: none;
+    }
+  }
 `;
 
-const Meta = styled.p`
-  font-size: ${({ theme }) => theme.fontSizes.xs};
-  color: ${({ theme }) => theme.colors.textMuted};
+const FavoriteSlot = styled.div`
+  top: ${({ theme }) => theme.space(2)};
+  right: ${({ theme }) => theme.space(2)};
+`;
+
+const PlaySlot = styled.div`
+  right: ${({ theme }) => theme.space(2)};
+  bottom: ${({ theme }) => theme.space(2)};
 `;
 
 /** Rendered width per breakpoint, so the browser downloads the right size. */
-const ARTWORK_SIZES = '(min-width: 1280px) 220px, (min-width: 1024px) 20vw, (min-width: 768px) 25vw, 50vw';
+const ARTWORK_SIZES = '(min-width: 1440px) 240px, (min-width: 1024px) 18vw, (min-width: 768px) 25vw, 50vw';
 
 interface AlbumCardProps {
   album: Album;
@@ -126,7 +191,9 @@ interface AlbumCardProps {
 }
 
 export function AlbumCard({ album, priority = false, showRank = true, headingLevel = 2 }: AlbumCardProps) {
-  const meta = [album.genre, album.releaseYear].filter(Boolean).join(' · ');
+  const isFavorite = useIsFavorite(album.id);
+  const { isCurrent } = useIsAlbumCurrent(album.id);
+  const subtitle = [album.artist, album.releaseYear].filter(Boolean).join(' • ');
 
   return (
     <CardShell>
@@ -144,13 +211,18 @@ export function AlbumCard({ album, priority = false, showRank = true, headingLev
         <Title as={`h${headingLevel}`}>
           <Link href={`/album/${album.id}`}>{album.title}</Link>
         </Title>
-        <Artist>{album.artist}</Artist>
-        {meta && <Meta>{meta}</Meta>}
+        <Subtitle title={subtitle}>{subtitle}</Subtitle>
+        <Subtitle>{album.genre}</Subtitle>
       </Body>
       {/* After the title in the DOM, so Tab reaches the link first. */}
-      <FavoriteSlot>
-        <FavoriteButton album={album} />
-      </FavoriteSlot>
+      <Controls>
+        <PlaySlot data-active={isCurrent}>
+          <AlbumPlayButton album={album} />
+        </PlaySlot>
+        <FavoriteSlot data-active={isFavorite}>
+          <FavoriteButton album={album} />
+        </FavoriteSlot>
+      </Controls>
     </CardShell>
   );
 }

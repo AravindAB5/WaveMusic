@@ -17,7 +17,12 @@ export const LOOKUP_CACHE_SECONDS = 10 * 60;
  */
 export const itunesApi = createApi({
   reducerPath: 'itunesApi',
-  baseQuery: fetchBaseQuery({ baseUrl: ITUNES_API_BASE_URL }),
+  baseQuery: fetchBaseQuery({
+    baseUrl: ITUNES_API_BASE_URL,
+    // Resolve `fetch` per call rather than at module load: the module is also
+    // imported where no global fetch exists yet (server bundles, jsdom tests).
+    fetchFn: (...args) => fetch(...args),
+  }),
   keepUnusedDataFor: LOOKUP_CACHE_SECONDS,
   // A lookup that failed while offline retries when the connection returns.
   refetchOnReconnect: true,

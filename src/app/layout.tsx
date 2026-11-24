@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
-import { SiteHeader } from '@/components/layout/SiteHeader';
+import { GeistSans } from 'geist/font/sans';
+import { AppShell } from '@/components/layout/AppShell';
 import { AudioEngine } from '@/features/player/AudioEngine';
 import { MiniPlayer } from '@/features/player/MiniPlayer';
 import { colorSchemeInitScript } from '@/styles/colorScheme';
@@ -25,14 +26,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     // The init script sets data-theme before hydration; suppress the expected
     // attribute mismatch on <html> only.
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={GeistSans.variable} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: colorSchemeInitScript }} />
       </head>
       <body>
         <Providers>
-          <SiteHeader />
-          {children}
+          <AppShell>{children}</AppShell>
           {/* Outside the page segments, so playback survives navigation. */}
           <MiniPlayer />
           <AudioEngine />
