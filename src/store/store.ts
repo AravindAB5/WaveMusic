@@ -7,10 +7,10 @@ import {
 } from '@/features/favorites/favoritesSlice';
 import { saveFavorites } from '@/features/favorites/storage';
 import { filtersSlice } from '@/features/filters/filtersSlice';
+import { playerSlice } from '@/features/player/playerSlice';
 import { itunesApi } from './itunesApi';
 
-/** The player slice joins here in a later step. */
-export const rootReducer = combineSlices(filtersSlice, favoritesSlice, itunesApi);
+export const rootReducer = combineSlices(filtersSlice, favoritesSlice, playerSlice, itunesApi);
 
 export type RootState = ReturnType<typeof rootReducer>;
 

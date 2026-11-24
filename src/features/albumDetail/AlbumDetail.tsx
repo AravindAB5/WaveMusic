@@ -81,7 +81,7 @@ export function AlbumDetail({ albumId, chartAlbum }: AlbumDetailProps) {
         <h2 id="tracks-heading">Tracks</h2>
         {data ? (
           data.tracks.length > 0 ? (
-            <TrackList tracks={data.tracks} albumArtist={album.artist} />
+            <TrackList tracks={data.tracks} album={album} />
           ) : (
             <StatusPanel title="No tracks available">
               iTunes didn&apos;t list any songs for this album.

@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import type { ReactNode } from 'react';
 import { SiteHeader } from '@/components/layout/SiteHeader';
+import { AudioEngine } from '@/features/player/AudioEngine';
+import { MiniPlayer } from '@/features/player/MiniPlayer';
 import { colorSchemeInitScript } from '@/styles/colorScheme';
 import { palettes } from '@/styles/palettes';
 import { Providers } from './providers';
@@ -31,6 +33,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Providers>
           <SiteHeader />
           {children}
+          {/* Outside the page segments, so playback survives navigation. */}
+          <MiniPlayer />
+          <AudioEngine />
         </Providers>
       </body>
     </html>
