@@ -57,7 +57,7 @@ describe('AlbumBrowser', () => {
     expect(selectFilters(store.getState())).toEqual({ query: '', genre: 'Country', sort: 'oldest', favoritesOnly: false });
     expect(genreChip('Country')).toHaveAttribute('aria-pressed', 'true');
     expect(genreChip('All')).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByLabelText('Sort by')).toHaveValue('oldest');
+    expect(screen.getByRole('combobox', { name: 'Sort by' })).toHaveTextContent('Oldest first');
     expect(visibleTitles()).toEqual(['Cowboy Carter', 'Grateful']);
     expect(screen.getByRole('status')).toHaveTextContent('Showing 2 of 5 albums');
   });
@@ -88,7 +88,8 @@ describe('AlbumBrowser', () => {
     const { user } = setup();
 
     await user.click(genreChip('R&B/Soul'));
-    await user.selectOptions(screen.getByLabelText('Sort by'), 'newest');
+    await user.click(screen.getByRole('combobox', { name: 'Sort by' }));
+    await user.click(screen.getByRole('option', { name: 'Newest first' }));
     flushUrlWrite();
 
     expect(window.location.search).toBe('?genre=R%26B%2FSoul&sort=newest');

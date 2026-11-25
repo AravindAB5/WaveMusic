@@ -6,6 +6,10 @@
 </p>
 
 <p align="center">
+  <strong><a href="https://wavemusic-abdev.vercel.app">Live demo → wavemusic-abdev.vercel.app</a></strong>
+</p>
+
+<p align="center">
   Browse, search and preview the current iTunes Top Albums chart.<br />
   Next.js 15 · TypeScript · Redux Toolkit + RTK Query · styled-components
 </p>
@@ -82,7 +86,7 @@ See `.env.example`.
 | Data fetching  | Server `fetch` + Next Data Cache (feed), RTK Query (iTunes Lookup) | |
 | Validation     | zod 4 | Every external payload (feed, lookup, localStorage) is validated |
 | Font           | Geist (self-hosted via `next/font/local`) | No network needed at build time |
-| Testing        | Jest 30 + React Testing Library 16 | 283 tests across 31 suites |
+| Testing        | Jest 30 + React Testing Library 16 | 297 tests across 33 suites |
 
 ## Architecture
 
@@ -170,7 +174,7 @@ src/
 npm test
 ```
 
-283 tests in 31 suites, all running in Jest (jsdom for components, node for pure logic):
+297 tests in 33 suites, all running in Jest (jsdom for components, node for pure logic):
 
 - **Data layer:** feed and lookup schemas and mappers against real captured responses, fetch
   error handling, RTK Query endpoint (request shape, caching, error states).
@@ -197,7 +201,10 @@ End-to-end tests (Playwright) are deferred; see [Status and roadmap](#status-and
 
 ## Deploying to Vercel
 
+**Live:** <https://wavemusic-abdev.vercel.app>
+
 The app deploys to Vercel as-is: no environment variables, secrets or build settings needed.
+To deploy your own copy:
 
 1. Push the repository to GitHub.
 2. In Vercel, **Add New… → Project** and import the repository.
@@ -228,7 +235,7 @@ The project was built in a 10-step plan, one reviewed commit per step:
 | 7 | RTK Query lookup + album page | Done |
 | 8 | Preview player + tests | Done |
 | 9 | Redesign, accessibility and responsive polish | Done |
-| 10 | Branding, README, FEATURES.md, Vercel deploy | Done |
+| 10 | Branding, README, FEATURES.md, Vercel deploy | Done ([live](https://wavemusic-abdev.vercel.app)) |
 
 The original plan had 12 steps. Two were deferred so the core app, polish and deployment could
 be finished properly first:

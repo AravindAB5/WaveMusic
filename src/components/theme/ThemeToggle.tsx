@@ -47,7 +47,16 @@ const MoonIcon = () => (
  * (set pre-paint by the inline init script), so this only reads it after mount:
  * the server can't know it, and guessing would cause a hydration mismatch.
  */
-export function ThemeToggle() {
+interface ThemeToggleProps {
+  /**
+   * Also render a text label ("Dark theme"/"Light theme") in a `.toggle-text`
+   * span, for layouts that show it (the sidebar). The accessible name
+   * ("Switch to dark theme") contains the visible text, per WCAG 2.5.3.
+   */
+  showLabel?: boolean;
+}
+
+export function ThemeToggle({ showLabel = false }: ThemeToggleProps) {
   const [scheme, setScheme] = useState<ColorScheme | null>(null);
 
   useEffect(() => {
@@ -65,6 +74,7 @@ export function ThemeToggle() {
   return (
     <Button type="button" onClick={handleClick} aria-label={`Switch to ${next} theme`} title={`Switch to ${next} theme`}>
       {current === 'dark' ? <SunIcon /> : <MoonIcon />}
+      {showLabel && <span className="toggle-text">{next === 'dark' ? 'Dark theme' : 'Light theme'}</span>}
     </Button>
   );
 }

@@ -3,6 +3,8 @@
 A walkthrough of what the app does and how each piece works, followed by how AI was used to
 build it. For setup and architecture, see the [README](README.md).
 
+**Try it live:** <https://wavemusic-abdev.vercel.app>
+
 ## Contents
 
 - [Album grid](#album-grid)
@@ -42,6 +44,9 @@ build it. For setup and architecture, see the [README](README.md).
   breaking the page.
 - A live result count ("Showing 11 of 69 albums") and a "No albums match" state with a one-tap
   reset.
+- The title, search, sort, chips and result count stay pinned while the album grid scrolls
+  underneath; a divider appears only once the header is actually pinned.
+- Sort uses a custom, fully keyboard-accessible dropdown (arrow keys, type-ahead, Escape).
 
 ## Favorites
 
@@ -146,7 +151,7 @@ I owned the engineering decisions and used AI to speed up implementation under m
 | ---- | ------------- |
 | Boilerplate and setup | Scaffolding, configs (Next, Jest, ESLint, TypeScript) |
 | Implementation | Components, slices, schemas and mappers written against my brief, then reviewed by me |
-| Tests | Unit, integration and regression tests (283 in total), each regression test checked to fail without its fix |
+| Tests | Unit, integration and regression tests (297 in total), each regression test checked to fail without its fix |
 | Code review and debugging | Investigating library behavior (Next caching, RTK Query internals), root-causing the bugs I reported |
 | Verification | Running typecheck, lint and tests after every change; checking pages in a browser at phone and desktop sizes |
 | Documentation | Drafts of the README and this file, edited by me |

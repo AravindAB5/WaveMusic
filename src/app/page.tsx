@@ -12,15 +12,19 @@ export default async function HomePage() {
 
   return (
     <PageContainer>
-      <PageHeader>
-        <h1>Top Albums</h1>
-        <p>
-          {albums.length > 0
-            ? `The ${albums.length} most popular albums on iTunes right now.`
-            : 'The most popular albums on iTunes right now.'}
-        </p>
-      </PageHeader>
-      <AlbumBrowser albums={albums} />
+      <AlbumBrowser
+        albums={albums}
+        header={
+          <PageHeader>
+            <h1>Top Albums</h1>
+            <p>
+              {albums.length > 0
+                ? `The ${albums.length} most popular albums on iTunes right now.`
+                : 'The most popular albums on iTunes right now.'}
+            </p>
+          </PageHeader>
+        }
+      />
     </PageContainer>
   );
 }

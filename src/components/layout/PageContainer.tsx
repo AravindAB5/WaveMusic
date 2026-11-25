@@ -28,7 +28,7 @@ export const PageContainer = styled.main.attrs({ id: 'main', tabIndex: -1 })`
 
 /** Page title block: an h1 and an optional muted subtitle paragraph. */
 export const PageHeader = styled.header`
-  margin-bottom: ${({ theme }) => theme.space(6)};
+  margin-bottom: ${({ theme }) => theme.space(4)};
 
   h1 {
     font-size: ${({ theme }) => theme.fontSizes.xxl};
@@ -41,6 +41,12 @@ export const PageHeader = styled.header`
   }
 
   p {
+    /* Phones: hidden to keep the pinned header short (the result count says the same). */
+    display: none;
     color: ${({ theme }) => theme.colors.textMuted};
+
+    ${({ theme }) => theme.media.md} {
+      display: block;
+    }
   }
 `;

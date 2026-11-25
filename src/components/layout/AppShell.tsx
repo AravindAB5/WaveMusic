@@ -6,10 +6,11 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { Suspense, type ReactNode } from 'react';
 import styled from 'styled-components';
 import { ThemeToggle } from '@/components/theme/ThemeToggle';
+import logoDark from '@/assets/brand/logo-lockup-dark.png';
+import logoLight from '@/assets/brand/logo-lockup-light.png';
 import { useFavorites } from '@/features/favorites/useFavorites';
-import logoDark from '@/assets/brand/logo-dark.png';
-import logoLight from '@/assets/brand/logo-light.png';
-import waveMark from '@/assets/brand/wave-mark.png';
+import { selectCurrentItem } from '@/features/player/playerSlice';
+import { useAppSelector } from '@/store/hooks';
 import { HeartIcon, HomeIcon } from './icons';
 
 const SkipLink = styled.a`
@@ -30,7 +31,7 @@ const SkipLink = styled.a`
   }
 `;
 
-const Chrome = styled.header`
+const Chrome = styled.header<{ $playerOpen: boolean }>`
   position: sticky;
   top: 0;
   z-index: ${({ theme }) => theme.zIndices.header};
@@ -55,8 +56,9 @@ const Chrome = styled.header`
     justify-content: flex-start;
     width: ${({ theme }) => theme.layout.sidebarWidth};
     height: auto;
-    /* Leave room for the mini-player so the footer controls stay reachable. */
-    padding: ${({ theme }) => `${theme.space(5)} ${theme.space(3)} calc(${theme.layout.playerHeight} + ${theme.space(4)})`};
+    /* Footer sits at the bottom; while the player bar is open, lift it above the bar. */
+    padding: ${({ theme, $playerOpen }) =>
+      `${theme.space(5)} ${theme.space(3)} ${$playerOpen ? `calc(${theme.layout.playerHeight} + ${theme.space(3)})` : theme.space(3)}`};
     border-right: 1px solid ${({ theme }) => theme.colors.border};
     border-bottom: 0;
     background: ${({ theme }) => theme.colors.bg};
@@ -79,44 +81,18 @@ const Brand = styled(Link)`
 `;
 
 /**
- * Phones/tablets (64px top bar): the wave mark plus a typeset wordmark in the
- * logo's colors; the stacked logo would be illegible at that height.
+ * The horizontal logo lockup (wave mark + wordmark, cut from the brand
+ * artwork). Both theme variants are rendered and CSS shows the one matching
+ * the active scheme, using the same rules as the palette (OS preference
+ * unless <html data-theme> overrides it), so the right logo is there on first
+ * paint with no hydration mismatch.
  */
-const CompactLogo = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.space(2)};
-  font-size: ${({ theme }) => theme.fontSizes.lg};
-  font-weight: ${({ theme }) => theme.fontWeights.bold};
-  letter-spacing: -0.02em;
+const Logo = styled.span`
+  display: block;
 
   img {
-    width: 52px;
-  }
-
-  .accent {
-    background: linear-gradient(90deg, #5b1cff, #a200ff);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  ${({ theme }) => theme.media.lg} {
-    display: none;
-  }
-`;
-
-/**
- * Sidebar (1024px+): the full stacked logo. Both theme variants are rendered
- * and CSS shows the one matching the active scheme, using the same rules as
- * the palette (OS preference unless <html data-theme> overrides it), so the
- * right logo is there on first paint with no hydration mismatch.
- */
-const FullLogo = styled.span`
-  display: none;
-
-  img {
-    width: 156px;
+    width: auto;
+    height: 28px;
   }
 
   .logo-dark {
@@ -140,8 +116,9 @@ const FullLogo = styled.span`
   }
 
   ${({ theme }) => theme.media.lg} {
-    display: block;
-    margin: ${({ theme }) => `0 auto ${theme.space(2)}`};
+    img {
+      height: 30px;
+    }
   }
 `;
 
@@ -154,7 +131,7 @@ const NavList = styled.ul`
 
   ${({ theme }) => theme.media.lg} {
     flex-direction: column;
-    margin-top: ${({ theme }) => theme.space(6)};
+    margin-top: ${({ theme }) => theme.space(8)};
   }
 `;
 
@@ -235,23 +212,48 @@ const Tools = styled.div`
   }
 `;
 
+/**
+ * Phones/tablets: the round icon button in the top bar. Sidebar: a footer row
+ * styled like the nav items (icon + "Dark theme"/"Light theme"), separated by
+ * a hairline and pinned to the bottom.
+ */
 const ThemeRow = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  font-size: ${({ theme }) => theme.fontSizes.sm};
-  color: ${({ theme }) => theme.colors.textMuted};
 
-  .theme-label {
+  .toggle-text {
     display: none;
   }
 
   ${({ theme }) => theme.media.lg} {
     margin-top: auto;
-    padding: ${({ theme }) => `${theme.space(3)} ${theme.space(3)} 0`};
+    padding-top: ${({ theme }) => theme.space(3)};
     border-top: 1px solid ${({ theme }) => theme.colors.border};
 
-    .theme-label {
+    button {
+      justify-content: flex-start;
+      gap: ${({ theme }) => theme.space(4)};
+      width: 100%;
+      height: 44px;
+      padding: ${({ theme }) => `0 ${theme.space(3)}`};
+      border: 0;
+      border-radius: ${({ theme }) => theme.radii.md};
+      background: transparent;
+      color: ${({ theme }) => theme.colors.textMuted};
+      font-weight: ${({ theme }) => theme.fontWeights.medium};
+
+      &:hover {
+        background: ${({ theme }) => theme.colors.surfaceRaised};
+        color: ${({ theme }) => theme.colors.text};
+      }
+
+      svg {
+        width: 22px;
+        height: 22px;
+      }
+    }
+
+    .toggle-text {
       display: inline;
     }
   }
@@ -325,31 +327,23 @@ function Nav() {
  * rendered twice). Pages render their own <main id="main"> inside.
  */
 export function AppShell({ children }: { children: ReactNode }) {
+  const playerOpen = useAppSelector(selectCurrentItem) !== null;
   return (
     <>
       <SkipLink href="#main">Skip to content</SkipLink>
 
-      <Chrome>
+      <Chrome $playerOpen={playerOpen}>
         <Brand href="/" aria-label="WaveMusic home">
-          <FullLogo>
+          <Logo>
             {/* Decorative: the link's aria-label names it. */}
-            <Image src={logoLight} alt="" className="logo-light" sizes="156px" />
-            <Image src={logoDark} alt="" className="logo-dark" sizes="156px" />
-          </FullLogo>
-          <CompactLogo>
-            <Image src={waveMark} alt="" sizes="52px" />
-            <span aria-hidden="true">
-              Wave<span className="accent">Music</span>
-            </span>
-          </CompactLogo>
+            <Image src={logoLight} alt="" className="logo-light" sizes="180px" priority />
+            <Image src={logoDark} alt="" className="logo-dark" sizes="180px" priority />
+          </Logo>
         </Brand>
         <Tools>
           <Nav />
           <ThemeRow>
-            <span className="theme-label" aria-hidden="true">
-              Theme
-            </span>
-            <ThemeToggle />
+            <ThemeToggle showLabel />
           </ThemeRow>
         </Tools>
       </Chrome>

@@ -67,6 +67,14 @@ describe('AppShell', () => {
     expect(screen.getByRole('link', { name: current })).toHaveAttribute('aria-current', 'page');
   });
 
+  it('labels the theme switch with visible text that is part of its accessible name', () => {
+    renderShell();
+    const toggle = screen.getByRole('button', { name: /Switch to (dark|light) theme/ });
+    const visible = toggle.textContent?.trim() ?? '';
+    expect(visible).toMatch(/^(Dark|Light) theme$/);
+    expect(toggle.getAttribute('aria-label')?.toLowerCase()).toContain(visible.toLowerCase());
+  });
+
   it('marks nothing current on an album page', () => {
     setRoute('/album/123');
     renderShell();

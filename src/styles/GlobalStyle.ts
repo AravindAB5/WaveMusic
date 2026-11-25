@@ -19,7 +19,14 @@ export const GlobalStyle = createGlobalStyle`
 
   *, *::before, *::after { box-sizing: border-box; }
 
-  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Always reserve the scrollbar's width. Otherwise, on systems with
+       classic scrollbars (Windows), the layout shifts sideways whenever the
+       page becomes too short to scroll, e.g. a search with few results. */
+    scrollbar-gutter: stable;
+  }
 
   body {
     margin: 0;

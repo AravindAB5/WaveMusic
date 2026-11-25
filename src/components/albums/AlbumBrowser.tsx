@@ -1,7 +1,8 @@
 'use client';
 
-import { useId, useMemo } from 'react';
+import { Fragment, useId, useMemo, type ReactNode } from 'react';
 import styled from 'styled-components';
+import { StickyHeader } from '@/components/layout/StickyHeader';
 import { Button } from '@/components/ui/Button';
 import { StatusPanel } from '@/components/ui/StatusPanel';
 import { useFavorites } from '@/features/favorites/useFavorites';
@@ -15,7 +16,7 @@ import { AlbumGrid } from './AlbumGrid';
 import { AlbumGridSkeleton } from './AlbumGridSkeleton';
 
 const ResultCount = styled.p`
-  margin-bottom: ${({ theme }) => theme.space(4)};
+  margin: 0;
   font-size: ${({ theme }) => theme.fontSizes.sm};
   color: ${({ theme }) => theme.colors.textMuted};
 `;
@@ -37,13 +38,15 @@ const Section = styled.section`
 
 interface AlbumBrowserProps {
   albums: readonly Album[];
+  /** Page title block, pinned together with the filters (rendered by the server page). */
+  header?: ReactNode;
 }
 
 /**
  * Filter controls + result count + grid. Chart albums come from the server;
  * filters from Redux/URL; favorites from Redux/localStorage.
  */
-export function AlbumBrowser({ albums }: AlbumBrowserProps) {
+export function AlbumBrowser({ albums, header }: AlbumBrowserProps) {
   useFiltersUrlSync();
   const dispatch = useAppDispatch();
   const filters = useAppSelector(selectFilters);
@@ -73,15 +76,31 @@ export function AlbumBrowser({ albums }: AlbumBrowserProps) {
   const genres = useMemo(() => getGenreOptions(albums, filters.genre), [albums, filters.genre]);
 
   // The chart itself is empty: show the grid's own empty state, no filters.
-  if (albums.length === 0) return <AlbumGrid albums={albums} />;
+  if (albums.length === 0) {
+    return (
+      <>
+        {header}
+        <AlbumGrid albums={albums} />
+      </>
+    );
+  }
 
-  const filtersBar = <FiltersBar genres={genres} totalCount={albums.length} />;
+  /** Title, filters and (optionally) the result count, pinned while the grid scrolls. */
+  // Explicit keys: `header` is an element created by the server component, and
+  // React key-checks server-created elements even in otherwise static lists.
+  const top = (extra?: ReactNode) => (
+    <StickyHeader>
+      <Fragment key="title">{header}</Fragment>
+      <FiltersBar key="filters" genres={genres} totalCount={albums.length} />
+      <Fragment key="extra">{extra}</Fragment>
+    </StickyHeader>
+  );
 
   if (filters.favoritesOnly && !favoritesReady) {
     // The server render can't see localStorage; avoid flashing "no favorites".
     return (
       <>
-        {filtersBar}
+        {top()}
         <AlbumGridSkeleton count={6} />
       </>
     );
@@ -90,7 +109,7 @@ export function AlbumBrowser({ albums }: AlbumBrowserProps) {
   if (filters.favoritesOnly && favorites.length === 0) {
     return (
       <>
-        {filtersBar}
+        {top()}
         <StatusPanel
           title="No favorites yet"
           action={
@@ -112,11 +131,12 @@ export function AlbumBrowser({ albums }: AlbumBrowserProps) {
 
   return (
     <>
-      {filtersBar}
-      {/* Polite live region: announces result changes without stealing focus. */}
-      <ResultCount role="status" aria-live="polite">
-        {countText}
-      </ResultCount>
+      {top(
+        // Polite live region: announces result changes without stealing focus.
+        <ResultCount role="status" aria-live="polite">
+          {countText}
+        </ResultCount>,
+      )}
 
       {shown === 0 && (
         <StatusPanel

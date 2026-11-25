@@ -3,6 +3,7 @@
 import { useId } from 'react';
 import styled, { css } from 'styled-components';
 import { HeartIcon, SearchIcon } from '@/components/layout/icons';
+import { Select, type SelectOption } from '@/components/ui/Select';
 import { VisuallyHidden } from '@/components/ui/VisuallyHidden';
 import { useFavorites } from '@/features/favorites/useFavorites';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
@@ -11,13 +12,13 @@ import {
   favoritesOnlyToggled,
   filtersReset,
   genreChanged,
-  isSortKey,
   queryChanged,
   selectFilters,
   selectHasActiveFilters,
   sortChanged,
   SORT_KEYS,
   SORT_LABELS,
+  type SortKey,
 } from './filtersSlice';
 
 const Form = styled.form`
@@ -27,26 +28,9 @@ const Form = styled.form`
   margin-bottom: ${({ theme }) => theme.space(3)};
 `;
 
-/** Search + sort stay pinned while the grid scrolls (below the mobile top bar). */
 const TopRow = styled.div`
-  position: sticky;
-  top: ${({ theme }) => theme.layout.headerHeight};
-  z-index: ${({ theme }) => theme.zIndices.header - 1};
   display: flex;
   gap: ${({ theme }) => theme.space(2)};
-  margin: ${({ theme }) => `0 -${theme.space(4)}`};
-  padding: ${({ theme }) => `${theme.space(3)} ${theme.space(4)}`};
-  background: color-mix(in srgb, ${({ theme }) => theme.colors.bg} 88%, transparent);
-  backdrop-filter: saturate(1.4) blur(14px);
-
-  ${({ theme }) => theme.media.md} {
-    margin: ${({ theme }) => `0 -${theme.space(8)}`};
-    padding: ${({ theme }) => `${theme.space(3)} ${theme.space(8)}`};
-  }
-
-  ${({ theme }) => theme.media.lg} {
-    top: 0;
-  }
 `;
 
 const pill = css`
@@ -99,25 +83,34 @@ const SearchField = styled.div`
   }
 `;
 
-const SortSelect = styled.select`
-  ${pill}
+/** Right-aligned on wider screens; capped on phones so the search box keeps room. */
+const SortSlot = styled.div`
   flex: none;
-  max-width: 9.5rem;
-  padding: ${({ theme }) => `0 ${theme.space(3)}`};
+  min-width: 0;
+  max-width: 11rem;
+
+  /* Phones: drop the decorative sort icon so the search field keeps room. */
+  .sort-icon {
+    display: none;
+  }
 
   ${({ theme }) => theme.media.md} {
     max-width: none;
-  }
-  color: ${({ theme }) => theme.colors.text};
-
-  &:focus-visible {
-    border-color: ${({ theme }) => theme.colors.focus};
-  }
-
-  ${({ theme }) => theme.media.md} {
     margin-left: auto;
+
+    .sort-icon {
+      display: block;
+    }
   }
 `;
+
+const SORT_OPTIONS: readonly SelectOption<SortKey>[] = SORT_KEYS.map((key) => ({ value: key, label: SORT_LABELS[key] }));
+
+const SortIcon = () => (
+  <svg className="sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+    <path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4" />
+  </svg>
+);
 
 /**
  * One horizontally scrolling shelf of chips at every width (the genre list
@@ -256,22 +249,15 @@ export function FiltersBar({ genres, totalCount }: FiltersBarProps) {
           />
         </SearchField>
 
-        <VisuallyHidden as="label" htmlFor={`${id}-sort`}>
-          Sort by
-        </VisuallyHidden>
-        <SortSelect
-          id={`${id}-sort`}
-          value={filters.sort}
-          onChange={(event) => {
-            if (isSortKey(event.target.value)) dispatch(sortChanged(event.target.value));
-          }}
-        >
-          {SORT_KEYS.map((key) => (
-            <option key={key} value={key}>
-              {SORT_LABELS[key]}
-            </option>
-          ))}
-        </SortSelect>
+        <SortSlot>
+          <Select
+            label="Sort by"
+            value={filters.sort}
+            options={SORT_OPTIONS}
+            onChange={(sort) => dispatch(sortChanged(sort))}
+            icon={<SortIcon />}
+          />
+        </SortSlot>
       </TopRow>
 
       <ChipRow>
